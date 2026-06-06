@@ -650,7 +650,7 @@ function ViewerMarketCard({ market, user, balance, onBet }) {
           const isWin  = market.winner === opt.id;
           return (
             <div key={opt.id}
-              style={{...S.optRow,...(sel===opt.id?S.optSel:{}),(isWin?S.optWinner:{}),(isMine?S.optMine:{}),cursor:canBet?"pointer":"default"}}
+              style={{...S.optRow,...(sel===opt.id?S.optSel:{}),...(isWin?S.optWinner:{}),...(isMine?S.optMine:{}),cursor:canBet?"pointer":"default"}}
               onClick={() => canBet && setSel(opt.id)}
             >
               <div style={S.optTop}>
@@ -921,4 +921,3 @@ const CSS = `
     .roleDivider{display:none;}
   }
 `;
-
