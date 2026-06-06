@@ -3,6 +3,17 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, update, onValue, off, push, serverTimestamp }
   from "firebase/database";
 
+// ─── HOOKS ───────────────────────────────────────────────────────────────────
+function useIsMobile() {
+  const [mobile, setMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 640 : false);
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 640);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+  return mobile;
+}
+
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 const STARTING_BALANCE = 1000;
 const LS = {
@@ -315,10 +326,11 @@ export default function App() {
 
 // ─── NAV ──────────────────────────────────────────────────────────────────────
 function Nav({ user, onLogout, onConfig, onHome, session, isStreamer, onDash }) {
+  const mobile = useIsMobile();
   return (
-    <nav style={S.nav}>
-      <div style={S.navBrand} onClick={onHome}>
-        <span style={S.navLogo}>BET<span style={S.navLogoAccent}>ter</span>viewer</span>
+    <nav style={{...S.nav, padding: mobile ? "10px 14px" : S.nav.padding}}>
+      <div style={{...S.navBrand, gap:12, cursor:"pointer"}} onClick={onHome}>
+        <img src="/logo.png.PNG" alt="BETterviewer" style={S.navLogo} />
         {session && (
           <div style={S.sessionPill}>
             {session.status === "live"
@@ -347,6 +359,7 @@ function Nav({ user, onLogout, onConfig, onHome, session, isStreamer, onDash }) 
 // ─── HOME ─────────────────────────────────────────────────────────────────────
 function HomePage({ user, configReady, onLogin, onCreate, onJoin, onGoConfig }) {
   const [code, setCode] = useState("");
+  const mobile = useIsMobile();
   return (
     <div style={S.homeWrap}>
       <div style={S.hero}>
@@ -354,7 +367,7 @@ function HomePage({ user, configReady, onLogin, onCreate, onJoin, onGoConfig }) 
         <div style={S.heroBlob2} />
         <div style={S.heroInner}>
           <div style={S.heroBadge}>🎮 Twitch · Paris en direct</div>
-          <h1 style={S.heroTitle}>
+          <h1 style={{...S.heroTitle, fontSize: mobile ? "38px" : "64px"}}>
             <span style={S.heroTitleBet}>BET</span>
             <span style={S.heroTitleTer}>ter</span>
             <span style={S.heroTitleViewer}>viewer</span>
@@ -382,14 +395,14 @@ function HomePage({ user, configReady, onLogin, onCreate, onJoin, onGoConfig }) 
           </button>
         </div>
       ) : (
-        <div style={S.cards2}>
+        <div className="cards2" style={S.cards2}>
           <div style={S.roleCard}>
             <div style={S.roleIcon}>🎙</div>
             <div style={S.roleLabel}>Streamer</div>
             <p style={S.roleDesc}>Lance une session, crée les marchés, désigne le gagnant.</p>
             <button style={S.primaryBtn} onClick={onCreate}>Créer une session</button>
           </div>
-          <div style={S.roleDivider}>ou</div>
+          <div className="roleDivider" style={S.roleDivider}>ou</div>
           <div style={S.roleCard}>
             <div style={S.roleIcon}>👁</div>
             <div style={S.roleLabel}>Viewer</div>
@@ -486,20 +499,21 @@ function StreamerDash({ session, user, onCreateMarket, onCloseMarket, onResolveM
     onCreateMarket(title, o); setTitle(""); setOpts(["Oui","Non"]);
   }
 
+  const mobile = useIsMobile();
   return (
     <div style={S.dashWrap}>
       {/* Top bar */}
-      <div style={S.topBar}>
+      <div style={{...S.topBar, flexDirection: mobile?"column":"row"}}>
         <div>
-          <div style={S.topCode}>{session.code}</div>
+          <div style={{...S.topCode, fontSize: mobile?"26px":"38px"}}>{session.code}</div>
           <div style={S.topMeta}>{participants.length} viewers · {markets.length} marchés</div>
         </div>
-        <div style={S.topActions}>
+        <div style={{...S.topActions, width: mobile?"100%":"auto"}}>
           <button style={S.ghostBtn} onClick={() => copy(session.link, "link")}>
-            {copied==="link" ? "✓ Lien copié" : "🔗 Copier le lien"}
+            {copied==="link" ? "✓ Lien copié" : "🔗 Lien"}
           </button>
           <button style={S.ghostBtn} onClick={() => copy(session.code, "code")}>
-            {copied==="code" ? "✓ Code copié" : "📋 Copier le code"}
+            {copied==="code" ? "✓ Copié" : "📋 Code"}
           </button>
           {session.status === "lobby" && <button style={S.goLiveBtn} onClick={onStartLive}>▶ Go Live</button>}
           {session.status === "live"  && <button style={S.endBtn}    onClick={onEndSession}>■ Terminer</button>}
@@ -579,6 +593,7 @@ function AdminMarketCard({ market, onClose, onResolve }) {
 // ─── VIEWER DASH ──────────────────────────────────────────────────────────────
 function ViewerDash({ session, user, onBet }) {
   const [tab, setTab] = useState("markets");
+  const mobile = useIsMobile();
   const me = session.participants?.[user.login];
   const participants = Object.values(session.participants || {}).sort((a,b) => b.balance - a.balance);
   const rank = participants.findIndex(p => p.login === user.login) + 1;
@@ -586,7 +601,7 @@ function ViewerDash({ session, user, onBet }) {
 
   return (
     <div style={S.dashWrap}>
-      <div style={S.viewerTopBar}>
+      <div style={{...S.viewerTopBar, flexDirection: mobile?"column":"row"}}>
         <div style={S.viewerLeft}>
           <img src={user.avatar} style={S.bigAva} alt="" />
           <div>
@@ -594,7 +609,7 @@ function ViewerDash({ session, user, onBet }) {
             <div style={S.viewerSub}>Session de <b>{session.streamerName}</b></div>
           </div>
         </div>
-        <div style={S.statsRow}>
+        <div style={{...S.statsRow, width: mobile?"100%":"auto", justifyContent: mobile?"space-around":"flex-end"}}>
           <Stat val={`${fmt(me?.balance ?? STARTING_BALANCE)} ₿`} label="Solde" accent />
           <Stat val={`#${rank}`} label="Rang" />
           <Stat val={participants.length} label="Joueurs" />
@@ -668,14 +683,14 @@ function ViewerMarketCard({ market, user, balance, onBet }) {
       </div>
       {canBet && sel && (
         <div style={S.betArea}>
-          <input style={{...S.input,flex:1}} type="number" placeholder="Montant ₿" min="1" max={balance}
+          <input style={{...S.input}} type="number" placeholder="Montant ₿" min="1" max={balance}
             value={amount} onChange={e=>setAmount(e.target.value)} />
           <div style={{display:"flex",gap:6}}>
             {[10,50,100,250].map(v=>(
               <button key={v} style={S.quickBtn} onClick={()=>setAmount(String(Math.min(v,balance)))}>{v}</button>
             ))}
           </div>
-          <button style={S.primaryBtn} onClick={submit}>Parier</button>
+          <button style={{...S.primaryBtn, width:"100%"}} onClick={submit}>Parier</button>
         </div>
       )}
       {myBetOpt && market.status==="open" && (
@@ -763,7 +778,7 @@ const S = {
   // NAV
   nav:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 28px", borderBottom:"1px solid #18182a", background:"rgba(7,7,15,0.97)", position:"sticky", top:0, zIndex:100, backdropFilter:"blur(16px)", gap:12, flexWrap:"wrap" },
   navBrand:{ display:"flex", alignItems:"center", gap:12, cursor:"pointer" },
-  navLogo:{ fontSize:20, fontWeight:900, letterSpacing:"-0.01em", color:"#f0f0f8" },
+  navLogo:{ height:36, width:"auto", objectFit:"contain" },
   navLogoAccent:{ color:"#9146ff" },
   sessionPill:{ display:"flex", alignItems:"center", gap:6, fontSize:11, background:"#18182a", padding:"3px 12px", borderRadius:20, color:"#9ca3af", letterSpacing:"0.06em" },
   liveDot:{ width:7, height:7, borderRadius:"50%", background:"#4ade80", boxShadow:"0 0 8px #4ade80", display:"inline-block" },
@@ -779,7 +794,7 @@ const S = {
   guestTxt:{ fontSize:13, color:"#4b5563" },
 
   // MAIN
-  main:{ maxWidth:960, margin:"0 auto", padding:"36px 20px" },
+  main:{ maxWidth:960, margin:"0 auto", padding:"clamp(16px, 4vw, 40px) clamp(12px, 3vw, 20px)" },
 
   // HOME
   homeWrap:{ maxWidth:680, margin:"0 auto" },
@@ -859,8 +874,8 @@ const S = {
   badgeOpen:{ fontSize:11, color:"#4ade80", background:"rgba(74,222,128,.1)", padding:"3px 10px", borderRadius:20, whiteSpace:"nowrap" },
   badgeClosed:{ fontSize:11, color:"#fbbf24", background:"rgba(251,191,36,.1)", padding:"3px 10px", borderRadius:20, whiteSpace:"nowrap" },
   badgeResolved:{ fontSize:11, color:"#9ca3af", background:"#18182a", padding:"3px 10px", borderRadius:20, whiteSpace:"nowrap" },
-  betArea:{ display:"flex", gap:8, marginTop:14, flexWrap:"wrap", alignItems:"center" },
-  quickBtn:{ background:"#18182a", border:"1px solid #2a2a3e", color:"#d1d5db", borderRadius:6, padding:"9px 10px", cursor:"pointer", fontSize:12 },
+  betArea:{ display:"flex", gap:8, marginTop:14, flexDirection:"column", alignItems:"stretch" },
+  quickBtn:{ background:"#18182a", border:"1px solid #2a2a3e", color:"#d1d5db", borderRadius:6, padding:"9px 10px", cursor:"pointer", fontSize:12, flex:1 },
   myBetNote:{ marginTop:12, fontSize:13, color:"#a78bfa", background:"rgba(145,70,255,.08)", border:"1px solid rgba(145,70,255,.2)", borderRadius:6, padding:"8px 14px" },
 
   // VIEWER BAR
@@ -916,8 +931,8 @@ const CSS = `
   .spin{display:inline-block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
   ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:#07070f;}::-webkit-scrollbar-thumb{background:#2a2a3e;border-radius:3px;}
-  @media(max-width:560px){
-    .cards2{grid-template-columns:1fr!important;}
-    .roleDivider{display:none;}
+  @media(max-width:640px){
+    .cards2 { grid-template-columns: 1fr !important; }
+    .roleDivider { display: none !important; }
   }
 `;
