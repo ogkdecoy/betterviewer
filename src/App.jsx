@@ -198,17 +198,33 @@ export default function App() {
 
   // OAuth callback
   useEffect(() => {
+    // Check if we have a pending token in localStorage (set before redirect)
+    const pendingToken = LS.get("bv_pending_token");
+    if (pendingToken) {
+      LS.del("bv_pending_token");
+      setAuthLoading(true);
+      fetchTwitchUser(pendingToken).then(u => {
+        const user = { id: u.id, login: u.login, displayName: u.display_name, avatar: u.profile_image_url, token: pendingToken, platform: "twitch" };
+        setTwitchUser(user); LS.set("bv_user", user); setAuthLoading(false);
+      }).catch(() => { setAuthError("Profil Twitch introuvable."); setAuthLoading(false); });
+      return;
+    }
+
     const hash = window.location.hash;
     if (!hash.includes("access_token")) return;
     const params = new URLSearchParams(hash.slice(1));
     const token = params.get("access_token");
     const state = params.get("state");
+    // Clear hash immediately
     window.history.replaceState({}, "", window.location.pathname);
     if (!token || state !== LS.get("bv_state")) { setAuthError("Auth échouée."); return; }
     LS.del("bv_state");
+    // Store token and reload to ensure clean state
+    LS.set("bv_pending_token", token);
     setAuthLoading(true);
     fetchTwitchUser(token).then(u => {
       const user = { id: u.id, login: u.login, displayName: u.display_name, avatar: u.profile_image_url, token, platform: "twitch" };
+      LS.del("bv_pending_token");
       setTwitchUser(user); LS.set("bv_user", user); setAuthLoading(false);
     }).catch(() => { setAuthError("Profil Twitch introuvable."); setAuthLoading(false); });
   }, []);
