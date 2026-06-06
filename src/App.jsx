@@ -510,14 +510,14 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
         <div className="cards2" style={{...S.cards2, gridTemplateColumns: mobile?"1fr":"1fr auto 1fr"}}>
           <div style={S.roleCard}>
             <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/streamer.PNG"
-              alt="Streamer" style={{width:"100%", maxWidth:280, display:"block", margin:"0 auto 16px", borderRadius:12}} />
+              alt="Streamer" style={{width:"100%", maxWidth:260, display:"block", margin:"0 auto 16px"}} />
             <p style={S.roleDesc}>{t.streamerDesc}</p>
             <button style={S.primaryBtn} onClick={onCreate}>{t.createSession}</button>
           </div>
           {!mobile && <div style={S.roleDivider}>ou</div>}
           <div style={S.roleCard}>
             <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/viewer.PNG"
-              alt="Viewer" style={{width:"100%", maxWidth:280, display:"block", margin:"0 auto 16px", borderRadius:12}} />
+              alt="Viewer" style={{width:"100%", maxWidth:260, display:"block", margin:"0 auto 16px"}} />
             <p style={S.roleDesc}>{t.viewerDesc}</p>
             <div style={S.joinRow}>
               <input style={S.codeInput} placeholder={t.codePlaceholder} maxLength={6}
@@ -830,7 +830,7 @@ const S = {
   twitchBtn:{ display:"inline-flex", alignItems:"center", background:"#9146ff", color:"#fff", border:"none", borderRadius:8, padding:"13px 30px", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8 },
   kickBtn:{ display:"inline-flex", alignItems:"center", background:"#53fc18", color:"#000", border:"none", borderRadius:8, padding:"13px 30px", fontSize:15, fontWeight:800, cursor:"pointer" },
   cards2:{ display:"grid", gap:20 },
-  roleCard:{ background:"#0d0d1a", border:"1px solid #18182a", borderRadius:14, padding:28 },
+  roleCard:{ background:"#0d0d1a", border:"1px solid #18182a", borderRadius:14, padding:28, display:"flex", flexDirection:"column", alignItems:"flex-start" },
   roleDivider:{ textAlign:"center", color:"#2a2a3e", fontSize:13, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" },
   roleIcon:{ fontSize:36, marginBottom:12 },
   roleLabel:{ fontSize:18, fontWeight:800, marginBottom:8 },
