@@ -134,6 +134,61 @@ const T = {
     totalPool: "Total",
     dashboard: "Dashboard",
     mySession: "My session",
+  },
+  es: {
+    tagline: "Twitch · Apuestas en directo",
+    heroSub: "Involucra a tus viewers con apuestas falsas en directo.\nEl mejor gana el giveaway.",
+    loginHint: "Conéctate para crear o unirte a una sesión",
+    loginTwitch: "Conectarse con Twitch",
+    loginKick: "Unirse con Kick",
+    kickPlaceholder: "Tu nombre de usuario Kick",
+    kickJoin: "Unirse",
+    streamer: "Streamer",
+    streamerDesc: "Inicia una sesión, crea mercados, elige al ganador.",
+    viewer: "Viewer",
+    viewerDesc: "Introduce el código compartido en stream para participar.",
+    createSession: "Crear una sesión",
+    joinSession: "Unirse",
+    codePlaceholder: "Ej: A3FX9K",
+    markets: "Mercados",
+    create: "Crear",
+    leaderboard: "Clasificación",
+    bets: "Apuestas",
+    noMarket: "No hay mercados disponibles por ahora.",
+    noMarketAction: "Crear el primero →",
+    question: "Pregunta",
+    questionPlaceholder: "¿Quién ganará el próximo duelo?",
+    options: "Opciones",
+    openMarket: "Abrir mercado",
+    closeBets: "Cerrar apuestas",
+    goLive: "▶ En directo",
+    endSession: "■ Terminar",
+    copyLink: "🔗 Enlace",
+    copyCode: "📋 Código",
+    copied: "✓ Copiado!",
+    resolve: "✓",
+    balance: "Saldo",
+    rank: "Rango",
+    players: "Jugadores",
+    lobby: "⏳ Esperando el inicio…",
+    bet: "Apostar",
+    myBet: "← Mi apuesta",
+    sessionOf: "Sesión de",
+    streamEnded: "🏆 ¡Stream terminado!",
+    winner: "GANADOR DEL GIVEAWAY",
+    myRank: "Tu clasificación",
+    backHome: "← Volver al inicio",
+    waitingLobby: "Esperando el inicio del stream…",
+    open: "● Abierto",
+    closed: "⏸ Cerrado",
+    resolved: "✓ Resuelto",
+    live: "EN DIRECTO",
+    ended: "TERMINADO",
+    addOption: "+ Opción",
+    viewers: "viewers",
+    totalPool: "Total",
+    dashboard: "Panel",
+    mySession: "Mi sesión",
   }
 };
 
@@ -160,7 +215,7 @@ const genId   = () => Math.random().toString(36).slice(2,10);
 const fmt     = (n) => Number(n||0).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
 
 // ─── TWITCH OAUTH ─────────────────────────────────────────────────────────────
-const REDIRECT_URI = typeof window !== "undefined" ? window.location.origin + window.location.pathname : "";
+const REDIRECT_URI = "https://betterviewer.vercel.app";
 
 function buildTwitchURL() {
   const state = genId();
@@ -358,7 +413,11 @@ export default function App() {
   }
 
   function logout() { LS.del("bv_user"); setTwitchUser(null); setView("home"); setSession(null); setSessionCode(null); if(unsub.current) unsub.current(); }
-  function toggleLang() { const nl=lang==="fr"?"en":"fr"; setLang(nl); LS.set("bv_lang",nl); }
+  function toggleLang() { 
+    const langs = ["fr", "en", "es"];
+    const next = langs[(langs.indexOf(lang) + 1) % langs.length];
+    setLang(next); LS.set("bv_lang", next); 
+  }
 
   const isStreamer = session?.streamerLogin === twitchUser?.login;
 
@@ -397,7 +456,7 @@ function Nav({ user, onLogout, onHome, session, isStreamer, onDash, lang, onTogg
       <div style={S.navRight}>
         {session && <button style={S.navBtn} onClick={onDash}>{isStreamer?t.dashboard:t.mySession}</button>}
         <button style={{...S.iconBtn, fontSize:13, fontWeight:700, padding:"4px 10px", border:"1px solid #2a2a3e", borderRadius:6}} onClick={onToggleLang}>
-          {lang==="fr"?"🇬🇧 EN":"🇫🇷 FR"}
+          {lang==="fr"?"🇬🇧 EN": lang==="en"?"🇪🇸 ES":"🇫🇷 FR"}
         </button>
         {user ? (
           <div style={S.userChip}>
