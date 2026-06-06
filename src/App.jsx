@@ -509,15 +509,15 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
       ) : (
         <div className="cards2" style={{...S.cards2, gridTemplateColumns: mobile?"1fr":"1fr auto 1fr"}}>
           <div style={S.roleCard}>
-            <div style={S.roleIcon}>🎙</div>
-            <div style={S.roleLabel}>{t.streamer}</div>
+            <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/streamer.PNG"
+              alt="Streamer" style={{width:"100%", maxWidth:280, display:"block", margin:"0 auto 16px", borderRadius:12}} />
             <p style={S.roleDesc}>{t.streamerDesc}</p>
             <button style={S.primaryBtn} onClick={onCreate}>{t.createSession}</button>
           </div>
           {!mobile && <div style={S.roleDivider}>ou</div>}
           <div style={S.roleCard}>
-            <div style={S.roleIcon}>👁</div>
-            <div style={S.roleLabel}>{t.viewer}</div>
+            <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/viewer.PNG"
+              alt="Viewer" style={{width:"100%", maxWidth:280, display:"block", margin:"0 auto 16px", borderRadius:12}} />
             <p style={S.roleDesc}>{t.viewerDesc}</p>
             <div style={S.joinRow}>
               <input style={S.codeInput} placeholder={t.codePlaceholder} maxLength={6}
