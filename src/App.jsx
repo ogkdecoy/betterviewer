@@ -215,7 +215,7 @@ const genId   = () => Math.random().toString(36).slice(2,10);
 const fmt     = (n) => Number(n||0).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
 
 // ─── TWITCH OAUTH ─────────────────────────────────────────────────────────────
-const REDIRECT_URI = "https://betterviewer.vercel.app";
+const REDIRECT_URI = "https://betterviewer.vercel.app/";
 
 function buildTwitchURL() {
   const state = genId();
