@@ -330,7 +330,7 @@ function Nav({ user, onLogout, onConfig, onHome, session, isStreamer, onDash }) 
   return (
     <nav style={{...S.nav, padding: mobile ? "10px 14px" : S.nav.padding}}>
       <div style={{...S.navBrand, gap:12, cursor:"pointer"}} onClick={onHome}>
-        <img src="/logo.png.PNG" alt="BETterviewer" style={S.navLogo} />
+        <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/logo.png.PNG" alt="BETterviewer" style={S.navLogo} />
         {session && (
           <div style={S.sessionPill}>
             {session.status === "live"
