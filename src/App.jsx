@@ -367,7 +367,7 @@ function HomePage({ user, configReady, onLogin, onCreate, onJoin, onGoConfig }) 
         <div style={S.heroBlob2} />
         <div style={S.heroInner}>
           <div style={S.heroBadge}>🎮 Twitch · Paris en direct</div>
-          <h1 style={{...S.heroTitle, fontSize: mobile ? "38px" : "64px"}}>
+          <h1 style={{...S.heroTitle, fontSize: mobile ? "clamp(28px, 10vw, 42px)" : "64px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace: mobile ? "normal" : "nowrap"}}>
             <span style={S.heroTitleBet}>BET</span>
             <span style={S.heroTitleTer}>ter</span>
             <span style={S.heroTitleViewer}>viewer</span>
