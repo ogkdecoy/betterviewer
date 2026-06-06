@@ -12,7 +12,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "172679268105",
   appId: "1:172679268105:web:db06e2ecf16ed1661875d8"
 };
-const TWITCH_CLIENT_ID = "qelllsuu0dhnnvz7m56q0";
+const TWITCH_CLIENT_ID = "d3313alwndj6mxi27aehgh6swizpk3";
 
 // ─── FIREBASE INIT ────────────────────────────────────────────────────────────
 let _app = null, _db = null;
