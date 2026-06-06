@@ -367,11 +367,11 @@ function HomePage({ user, configReady, onLogin, onCreate, onJoin, onGoConfig }) 
         <div style={S.heroBlob2} />
         <div style={S.heroInner}>
           <div style={S.heroBadge}>🎮 Twitch · Paris en direct</div>
-          <h1 style={{...S.heroTitle, fontSize: mobile ? "clamp(28px, 10vw, 42px)" : "64px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace: mobile ? "normal" : "nowrap"}}>
-            <span style={S.heroTitleBet}>BET</span>
-            <span style={S.heroTitleTer}>ter</span>
-            <span style={S.heroTitleViewer}>viewer</span>
-          </h1>
+          <img 
+            src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/logo.png.PNG" 
+            alt="BETterviewer" 
+            style={{width:"100%", maxWidth: mobile ? "320px" : "520px", margin:"0 auto 16px", display:"block"}}
+          />
           <p style={S.heroSub}>Engage tes viewers avec des paris factices en direct.<br/>Le meilleur gagne le giveaway.</p>
         </div>
       </div>
