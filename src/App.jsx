@@ -510,14 +510,14 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
         <div className="cards2" style={{...S.cards2, gridTemplateColumns: mobile?"1fr":"1fr auto 1fr"}}>
           <div style={S.roleCard}>
             <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/streamer.PNG"
-              alt="Streamer" style={{width:"100%", maxWidth:260, display:"block", margin:"0 auto 16px"}} />
+              alt="Streamer" style={{width:"100%", maxWidth:260, display:"block", margin:"0 auto 16px", mixBlendMode:"screen"}} />
             <p style={S.roleDesc}>{t.streamerDesc}</p>
             <button style={S.primaryBtn} onClick={onCreate}>{t.createSession}</button>
           </div>
           {!mobile && <div style={S.roleDivider}>ou</div>}
           <div style={S.roleCard}>
             <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/viewer.PNG"
-              alt="Viewer" style={{width:"100%", maxWidth:260, display:"block", margin:"0 auto 16px"}} />
+              alt="Viewer" style={{width:"100%", maxWidth:260, display:"block", margin:"0 auto 16px", mixBlendMode:"screen"}} />
             <p style={S.roleDesc}>{t.viewerDesc}</p>
             <div style={S.joinRow}>
               <input style={S.codeInput} placeholder={t.codePlaceholder} maxLength={6}
@@ -836,8 +836,8 @@ const S = {
   roleLabel:{ fontSize:18, fontWeight:800, marginBottom:8 },
   roleDesc:{ fontSize:13, color:"#6b7280", marginBottom:20, lineHeight:1.6 },
   primaryBtn:{ background:"linear-gradient(135deg,#6d28d9,#9146ff)", border:"none", color:"#fff", borderRadius:8, padding:"11px 24px", fontSize:14, fontWeight:800, cursor:"pointer" },
-  joinRow:{ display:"flex", gap:8 },
-  codeInput:{ background:"#18182a", border:"1px solid #2a2a3e", borderRadius:8, color:"#f0f0f8", padding:"11px 14px", fontSize:18, fontFamily:"'DM Mono',monospace", letterSpacing:"0.2em", outline:"none", flex:1, width:0, textTransform:"uppercase" },
+  joinRow:{ display:"flex", gap:8, width:"100%" },
+  codeInput:{ background:"#18182a", border:"1px solid #2a2a3e", borderRadius:8, color:"#f0f0f8", padding:"11px 14px", fontSize:18, fontFamily:"'DM Mono',monospace", letterSpacing:"0.2em", outline:"none", flex:1, minWidth:0, textTransform:"uppercase" },
   joinBtn:{ background:"#9146ff", border:"none", color:"#fff", borderRadius:8, padding:"11px 20px", cursor:"pointer", fontWeight:900, fontSize:15 },
   dashWrap:{ maxWidth:720, margin:"0 auto" },
   topBar:{ display:"flex", justifyContent:"space-between", alignItems:"center", background:"#0d0d1a", border:"1px solid #18182a", borderRadius:14, padding:"20px 24px", marginBottom:24, gap:16 },
