@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, update, onValue } from "firebase/database";
 
-// ─── FIREBASE CONFIG (hardcoded) ──────────────────────────────────────────────
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC4N6lt83VhpAoD6Q9E06LG3RSLS6-uu2Y",
   authDomain: "betterviewer-d14fa.firebaseapp.com",
@@ -13,186 +12,29 @@ const FIREBASE_CONFIG = {
   appId: "1:172679268105:web:db06e2ecf16ed1661875d8"
 };
 const TWITCH_CLIENT_ID = "d3313alwndj6mxi27aehgh6swizpk3";
+const REDIRECT_URI = "https://betterviewer.vercel.app/";
+const STARTING_BALANCE = 1000;
+const LOGO = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/logo.png.PNG";
+const IMG_STREAMER = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/streamer.PNG";
+const IMG_VIEWER = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/viewer.PNG";
 
-// ─── FIREBASE INIT ────────────────────────────────────────────────────────────
-let _app = null, _db = null;
+let _db = null;
 function getDb() {
   if (_db) return _db;
-  _app = initializeApp(FIREBASE_CONFIG);
-  _db = getDatabase(_app);
+  initializeApp(FIREBASE_CONFIG);
+  _db = getDatabase();
   return _db;
 }
 
-// ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
-const T = {
-  fr: {
-    tagline: "Twitch · Paris en direct",
-    heroSub: "Engage tes viewers avec des paris factices en direct.\nLe meilleur gagne le giveaway.",
-    loginHint: "Connecte-toi pour créer ou rejoindre une session",
-    loginTwitch: "Se connecter avec Twitch",
-    loginKick: "Rejoindre avec Kick",
-    kickPlaceholder: "Ton pseudo Kick",
-    kickJoin: "Rejoindre",
-    streamer: "Streamer",
-    streamerDesc: "Lance une session, crée les marchés, désigne le gagnant.",
-    viewer: "Viewer",
-    viewerDesc: "Entre le code partagé en stream pour participer.",
-    createSession: "Créer une session",
-    joinSession: "Rejoindre",
-    codePlaceholder: "Ex: A3FX9K",
-    markets: "Marchés",
-    create: "Créer",
-    leaderboard: "Classement",
-    bets: "Paris",
-    noMarket: "Aucun marché disponible pour l'instant.",
-    noMarketAction: "Créer le premier →",
-    question: "Question",
-    questionPlaceholder: "Ex: Qui va gagner le prochain duel ?",
-    options: "Options",
-    openMarket: "Ouvrir le marché",
-    closeBets: "Fermer les paris",
-    goLive: "▶ Go Live",
-    endSession: "■ Terminer",
-    copyLink: "🔗 Lien",
-    copyCode: "📋 Code",
-    copied: "✓ Copié !",
-    resolve: "✓",
-    balance: "Solde",
-    rank: "Rang",
-    players: "Joueurs",
-    lobby: "⏳ En attente du démarrage…",
-    bet: "Parier",
-    myBet: "← Mon pari",
-    sessionOf: "Session de",
-    streamEnded: "🏆 Stream terminé !",
-    winner: "GAGNANT DU GIVEAWAY",
-    myRank: "Ton classement",
-    backHome: "← Retour à l'accueil",
-    waitingLobby: "En attente du démarrage…",
-    open: "● Ouvert",
-    closed: "⏸ Fermé",
-    resolved: "✓ Résolu",
-    live: "LIVE",
-    ended: "TERMINÉ",
-    addOption: "+ Option",
-    viewers: "viewers",
-    totalPool: "Total",
-    dashboard: "Dashboard",
-    mySession: "Ma session",
-  },
-  en: {
-    tagline: "Twitch · Live Betting",
-    heroSub: "Engage your viewers with live fake bets.\nThe best player wins the giveaway.",
-    loginHint: "Sign in to create or join a session",
-    loginTwitch: "Sign in with Twitch",
-    loginKick: "Join with Kick",
-    kickPlaceholder: "Your Kick username",
-    kickJoin: "Join",
-    streamer: "Streamer",
-    streamerDesc: "Start a session, create markets, pick the winner.",
-    viewer: "Viewer",
-    viewerDesc: "Enter the code shared in stream to participate.",
-    createSession: "Create a session",
-    joinSession: "Join",
-    codePlaceholder: "Ex: A3FX9K",
-    markets: "Markets",
-    create: "Create",
-    leaderboard: "Leaderboard",
-    bets: "Bets",
-    noMarket: "No markets available yet.",
-    noMarketAction: "Create the first one →",
-    question: "Question",
-    questionPlaceholder: "Ex: Who will win the next duel?",
-    options: "Options",
-    openMarket: "Open market",
-    closeBets: "Close bets",
-    goLive: "▶ Go Live",
-    endSession: "■ End stream",
-    copyLink: "🔗 Link",
-    copyCode: "📋 Code",
-    copied: "✓ Copied!",
-    resolve: "✓",
-    balance: "Balance",
-    rank: "Rank",
-    players: "Players",
-    lobby: "⏳ Waiting for stream to start…",
-    bet: "Bet",
-    myBet: "← My bet",
-    sessionOf: "Session by",
-    streamEnded: "🏆 Stream ended!",
-    winner: "GIVEAWAY WINNER",
-    myRank: "Your rank",
-    backHome: "← Back to home",
-    waitingLobby: "Waiting for stream to start…",
-    open: "● Open",
-    closed: "⏸ Closed",
-    resolved: "✓ Resolved",
-    live: "LIVE",
-    ended: "ENDED",
-    addOption: "+ Option",
-    viewers: "viewers",
-    totalPool: "Total",
-    dashboard: "Dashboard",
-    mySession: "My session",
-  },
-  es: {
-    tagline: "Twitch · Apuestas en directo",
-    heroSub: "Involucra a tus viewers con apuestas falsas en directo.\nEl mejor gana el giveaway.",
-    loginHint: "Conéctate para crear o unirte a una sesión",
-    loginTwitch: "Conectarse con Twitch",
-    loginKick: "Unirse con Kick",
-    kickPlaceholder: "Tu nombre de usuario Kick",
-    kickJoin: "Unirse",
-    streamer: "Streamer",
-    streamerDesc: "Inicia una sesión, crea mercados, elige al ganador.",
-    viewer: "Viewer",
-    viewerDesc: "Introduce el código compartido en stream para participar.",
-    createSession: "Crear una sesión",
-    joinSession: "Unirse",
-    codePlaceholder: "Ej: A3FX9K",
-    markets: "Mercados",
-    create: "Crear",
-    leaderboard: "Clasificación",
-    bets: "Apuestas",
-    noMarket: "No hay mercados disponibles por ahora.",
-    noMarketAction: "Crear el primero →",
-    question: "Pregunta",
-    questionPlaceholder: "¿Quién ganará el próximo duelo?",
-    options: "Opciones",
-    openMarket: "Abrir mercado",
-    closeBets: "Cerrar apuestas",
-    goLive: "▶ En directo",
-    endSession: "■ Terminar",
-    copyLink: "🔗 Enlace",
-    copyCode: "📋 Código",
-    copied: "✓ Copiado!",
-    resolve: "✓",
-    balance: "Saldo",
-    rank: "Rango",
-    players: "Jugadores",
-    lobby: "⏳ Esperando el inicio…",
-    bet: "Apostar",
-    myBet: "← Mi apuesta",
-    sessionOf: "Sesión de",
-    streamEnded: "🏆 ¡Stream terminado!",
-    winner: "GANADOR DEL GIVEAWAY",
-    myRank: "Tu clasificación",
-    backHome: "← Volver al inicio",
-    waitingLobby: "Esperando el inicio del stream…",
-    open: "● Abierto",
-    closed: "⏸ Cerrado",
-    resolved: "✓ Resuelto",
-    live: "EN DIRECTO",
-    ended: "TERMINADO",
-    addOption: "+ Opción",
-    viewers: "viewers",
-    totalPool: "Total",
-    dashboard: "Panel",
-    mySession: "Mi sesión",
-  }
+const LS = {
+  get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+  del: (k) => localStorage.removeItem(k),
 };
+const genCode = () => Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6).padEnd(6,"X");
+const genId   = () => Math.random().toString(36).slice(2,10);
+const fmt     = (n) => Number(n||0).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
 
-// ─── HOOKS ────────────────────────────────────────────────────────────────────
 function useIsMobile() {
   const [m, setM] = useState(typeof window !== "undefined" ? window.innerWidth < 640 : false);
   useEffect(() => {
@@ -203,19 +45,65 @@ function useIsMobile() {
   return m;
 }
 
-// ─── UTILS ────────────────────────────────────────────────────────────────────
-const STARTING_BALANCE = 1000;
-const LS = {
-  get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
-  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
-  del: (k) => localStorage.removeItem(k),
+const T = {
+  fr: {
+    tagline:"Twitch · Paris en direct", heroSub:"Engage tes viewers avec des paris factices en direct.\nLe meilleur gagne le giveaway.",
+    loginHint:"Connecte-toi pour créer ou rejoindre une session", loginTwitch:"Se connecter avec Twitch",
+    loginKick:"Rejoindre avec Kick", kickPlaceholder:"Ton pseudo Kick", kickJoin:"Rejoindre",
+    streamer:"Streamer", streamerDesc:"Lance une session, crée les marchés, désigne le gagnant.",
+    viewer:"Viewer", viewerDesc:"Entre le code partagé en stream pour participer.",
+    createSession:"Créer une session", codePlaceholder:"Ex: A3FX9K",
+    markets:"Marchés", create:"Créer", leaderboard:"Classement", bets:"Paris",
+    noMarket:"Aucun marché disponible.", noMarketAction:"Créer le premier →",
+    question:"Question", questionPlaceholder:"Ex: Qui va gagner le prochain duel ?",
+    options:"Options", openMarket:"Ouvrir le marché", closeBets:"Fermer les paris",
+    goLive:"▶ Go Live", endSession:"■ Terminer", copyLink:"🔗 Lien", copyCode:"📋 Code",
+    copied:"✓ Copié!", resolve:"✓", balance:"Solde", rank:"Rang", players:"Joueurs",
+    bet:"Parier", myBet:"← Mon pari", sessionOf:"Session de", streamEnded:"🏆 Stream terminé !",
+    winner:"GAGNANT DU GIVEAWAY", myRank:"Ton classement", backHome:"← Retour à l'accueil",
+    waitingLobby:"En attente du démarrage…", open:"● Ouvert", closed:"⏸ Fermé", resolved:"✓ Résolu",
+    live:"LIVE", ended:"TERMINÉ", addOption:"+ Option", viewers:"viewers", totalPool:"Total",
+    dashboard:"Dashboard", mySession:"Ma session",
+  },
+  en: {
+    tagline:"Twitch · Live Betting", heroSub:"Engage your viewers with live fake bets.\nThe best player wins the giveaway.",
+    loginHint:"Sign in to create or join a session", loginTwitch:"Sign in with Twitch",
+    loginKick:"Join with Kick", kickPlaceholder:"Your Kick username", kickJoin:"Join",
+    streamer:"Streamer", streamerDesc:"Start a session, create markets, pick the winner.",
+    viewer:"Viewer", viewerDesc:"Enter the code shared in stream to participate.",
+    createSession:"Create a session", codePlaceholder:"Ex: A3FX9K",
+    markets:"Markets", create:"Create", leaderboard:"Leaderboard", bets:"Bets",
+    noMarket:"No markets available yet.", noMarketAction:"Create the first one →",
+    question:"Question", questionPlaceholder:"Ex: Who will win the next duel?",
+    options:"Options", openMarket:"Open market", closeBets:"Close bets",
+    goLive:"▶ Go Live", endSession:"■ End stream", copyLink:"🔗 Link", copyCode:"📋 Code",
+    copied:"✓ Copied!", resolve:"✓", balance:"Balance", rank:"Rank", players:"Players",
+    bet:"Bet", myBet:"← My bet", sessionOf:"Session by", streamEnded:"🏆 Stream ended!",
+    winner:"GIVEAWAY WINNER", myRank:"Your rank", backHome:"← Back to home",
+    waitingLobby:"Waiting for stream to start…", open:"● Open", closed:"⏸ Closed", resolved:"✓ Resolved",
+    live:"LIVE", ended:"ENDED", addOption:"+ Option", viewers:"viewers", totalPool:"Total",
+    dashboard:"Dashboard", mySession:"My session",
+  },
+  es: {
+    tagline:"Twitch · Apuestas en directo", heroSub:"Involucra a tus viewers con apuestas falsas.\nEl mejor gana el giveaway.",
+    loginHint:"Conéctate para crear o unirte a una sesión", loginTwitch:"Conectarse con Twitch",
+    loginKick:"Unirse con Kick", kickPlaceholder:"Tu nombre de usuario Kick", kickJoin:"Unirse",
+    streamer:"Streamer", streamerDesc:"Inicia una sesión, crea mercados, elige al ganador.",
+    viewer:"Viewer", viewerDesc:"Introduce el código compartido en stream para participar.",
+    createSession:"Crear una sesión", codePlaceholder:"Ej: A3FX9K",
+    markets:"Mercados", create:"Crear", leaderboard:"Clasificación", bets:"Apuestas",
+    noMarket:"No hay mercados disponibles.", noMarketAction:"Crear el primero →",
+    question:"Pregunta", questionPlaceholder:"¿Quién ganará el próximo duelo?",
+    options:"Opciones", openMarket:"Abrir mercado", closeBets:"Cerrar apuestas",
+    goLive:"▶ En directo", endSession:"■ Terminar", copyLink:"🔗 Enlace", copyCode:"📋 Código",
+    copied:"✓ Copiado!", resolve:"✓", balance:"Saldo", rank:"Rango", players:"Jugadores",
+    bet:"Apostar", myBet:"← Mi apuesta", sessionOf:"Sesión de", streamEnded:"🏆 ¡Stream terminado!",
+    winner:"GANADOR DEL GIVEAWAY", myRank:"Tu clasificación", backHome:"← Volver al inicio",
+    waitingLobby:"Esperando el inicio…", open:"● Abierto", closed:"⏸ Cerrado", resolved:"✓ Resuelto",
+    live:"EN DIRECTO", ended:"TERMINADO", addOption:"+ Opción", viewers:"viewers", totalPool:"Total",
+    dashboard:"Panel", mySession:"Mi sesión",
+  }
 };
-const genCode = () => Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6).padEnd(6,"X");
-const genId   = () => Math.random().toString(36).slice(2,10);
-const fmt     = (n) => Number(n||0).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
-
-// ─── TWITCH OAUTH ─────────────────────────────────────────────────────────────
-const REDIRECT_URI = "https://betterviewer.vercel.app/";
 
 function buildTwitchURL() {
   const state = genId();
@@ -233,11 +121,8 @@ async function fetchTwitchUser(token) {
   return (await r.json()).data[0];
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// ROOT APP
-// ═════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [lang, setLang]           = useState(() => LS.get("bv_lang") || "fr");
+  const [lang, setLang]             = useState(() => LS.get("bv_lang") || "fr");
   const [twitchUser, setTwitchUser] = useState(() => LS.get("bv_user") || null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError]   = useState("");
@@ -248,43 +133,36 @@ export default function App() {
   const unsub = useRef(null);
   const t = T[lang];
 
-  // Init Firebase on load
   useEffect(() => { getDb(); }, []);
 
-  // OAuth callback
   useEffect(() => {
-    // Check if we have a pending token in localStorage (set before redirect)
-    const pendingToken = LS.get("bv_pending_token");
-    if (pendingToken) {
+    const pending = LS.get("bv_pending_token");
+    if (pending) {
       LS.del("bv_pending_token");
       setAuthLoading(true);
-      fetchTwitchUser(pendingToken).then(u => {
-        const user = { id: u.id, login: u.login, displayName: u.display_name, avatar: u.profile_image_url, token: pendingToken, platform: "twitch" };
+      fetchTwitchUser(pending).then(u => {
+        const user = { id:u.id, login:u.login, displayName:u.display_name, avatar:u.profile_image_url, token:pending, platform:"twitch" };
         setTwitchUser(user); LS.set("bv_user", user); setAuthLoading(false);
       }).catch(() => { setAuthError("Profil Twitch introuvable."); setAuthLoading(false); });
       return;
     }
-
     const hash = window.location.hash;
     if (!hash.includes("access_token")) return;
     const params = new URLSearchParams(hash.slice(1));
     const token = params.get("access_token");
     const state = params.get("state");
-    // Clear hash immediately
     window.history.replaceState({}, "", window.location.pathname);
     if (!token || state !== LS.get("bv_state")) { setAuthError("Auth échouée."); return; }
     LS.del("bv_state");
-    // Store token and reload to ensure clean state
     LS.set("bv_pending_token", token);
     setAuthLoading(true);
     fetchTwitchUser(token).then(u => {
-      const user = { id: u.id, login: u.login, displayName: u.display_name, avatar: u.profile_image_url, token, platform: "twitch" };
+      const user = { id:u.id, login:u.login, displayName:u.display_name, avatar:u.profile_image_url, token, platform:"twitch" };
       LS.del("bv_pending_token");
       setTwitchUser(user); LS.set("bv_user", user); setAuthLoading(false);
     }).catch(() => { setAuthError("Profil Twitch introuvable."); setAuthLoading(false); });
   }, []);
 
-  // ?join= param
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const j = p.get("join");
@@ -296,68 +174,50 @@ export default function App() {
     if (pending) { LS.del("bv_pending_join"); handleJoin(pending); }
   }, [twitchUser]);
 
-  // Firebase subscription
   function subscribeSession(code) {
     if (unsub.current) unsub.current();
-    const r = ref(getDb(), `sessions/${code}`);
-    unsub.current = onValue(r, snap => { if (snap.val()) setSession(snap.val()); });
+    unsub.current = onValue(ref(getDb(), `sessions/${code}`), snap => { if (snap.val()) setSession(snap.val()); });
   }
   useEffect(() => () => { if (unsub.current) unsub.current(); }, []);
 
   function showToast(msg, type="ok") { setToast({msg,type}); setTimeout(()=>setToast(null),3500); }
 
-  // ── Kick login ──
   function handleKickLogin(pseudo) {
     if (!pseudo.trim()) return;
-    const user = {
-      id: `kick_${pseudo.toLowerCase()}`,
-      login: pseudo.toLowerCase(),
-      displayName: pseudo,
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(pseudo)}&background=53fc18&color=000&bold=true`,
-      platform: "kick"
-    };
+    const user = { id:`kick_${pseudo.toLowerCase()}`, login:pseudo.toLowerCase(), displayName:pseudo,
+      avatar:`https://ui-avatars.com/api/?name=${encodeURIComponent(pseudo)}&background=53fc18&color=000&bold=true`, platform:"kick" };
     setTwitchUser(user); LS.set("bv_user", user);
   }
 
-  // ── Create session ──
   async function handleCreate() {
     const code = genCode();
     const link = `${window.location.origin}${window.location.pathname}?join=${code}`;
     await set(ref(getDb(), `sessions/${code}`), {
-      code, link,
-      streamerLogin: twitchUser.login,
-      streamerName: twitchUser.displayName,
-      streamerAvatar: twitchUser.avatar,
-      streamerPlatform: twitchUser.platform || "twitch",
-      status: "lobby",
-      createdAt: Date.now(),
-      participants: {
-        [twitchUser.login]: { login: twitchUser.login, displayName: twitchUser.displayName, avatar: twitchUser.avatar, balance: STARTING_BALANCE, joinedAt: Date.now() }
-      },
-      markets: {},
+      code, link, streamerLogin:twitchUser.login, streamerName:twitchUser.displayName,
+      streamerAvatar:twitchUser.avatar, status:"lobby", createdAt:Date.now(),
+      participants:{ [twitchUser.login]:{ login:twitchUser.login, displayName:twitchUser.displayName, avatar:twitchUser.avatar, balance:STARTING_BALANCE, joinedAt:Date.now() } },
+      markets:{},
     });
     setSessionCode(code); subscribeSession(code); setView("streamer");
     showToast(`Session créée ! Code : ${code}`);
   }
 
-  // ── Join session ──
   async function handleJoin(code) {
     const snap = await get(ref(getDb(), `sessions/${code}`));
     if (!snap.exists()) return showToast("Code introuvable.", "err");
     const data = snap.val();
-    if (data.status === "ended") return showToast(lang==="fr"?"Session terminée.":"Session ended.", "err");
+    if (data.status === "ended") return showToast("Session terminée.", "err");
     if (!data.participants?.[twitchUser.login]) {
       await set(ref(getDb(), `sessions/${code}/participants/${twitchUser.login}`), {
-        login: twitchUser.login, displayName: twitchUser.displayName,
-        avatar: twitchUser.avatar, balance: STARTING_BALANCE, joinedAt: Date.now(),
+        login:twitchUser.login, displayName:twitchUser.displayName, avatar:twitchUser.avatar, balance:STARTING_BALANCE, joinedAt:Date.now(),
       });
     }
     setSessionCode(code); subscribeSession(code);
     setView(data.streamerLogin === twitchUser.login ? "streamer" : "viewer");
-    showToast(lang==="fr"?`Rejoint la session ${code} !`:`Joined session ${code}!`);
+    showToast(`Rejoint la session ${code} !`);
   }
 
-  async function handleStartLive() { await update(ref(getDb(),`sessions/${sessionCode}`),{status:"live"}); showToast(lang==="fr"?"Le live a démarré !":"Stream started!"); }
+  async function handleStartLive() { await update(ref(getDb(),`sessions/${sessionCode}`),{status:"live"}); showToast("Le live a démarré !"); }
   async function handleEndSession() { await update(ref(getDb(),`sessions/${sessionCode}`),{status:"ended"}); setView("results"); }
 
   async function handleCreateMarket(title, options) {
@@ -365,7 +225,7 @@ export default function App() {
     const opts = {};
     options.forEach(label => { const oid=genId(); opts[oid]={id:oid,label,pool:0,bettors:{}}; });
     await set(ref(getDb(),`sessions/${sessionCode}/markets/${id}`),{id,title,options:opts,status:"open",createdAt:Date.now(),totalPool:0,winner:null});
-    showToast(lang==="fr"?"Marché ouvert !":"Market opened!");
+    showToast("Marché ouvert !");
   }
 
   async function handleCloseMarket(marketId) { await update(ref(getDb(),`sessions/${sessionCode}/markets/${marketId}`),{status:"closed"}); }
@@ -383,14 +243,13 @@ export default function App() {
     Object.values(market.options||{}).forEach(opt => {
       Object.entries(opt.bettors||{}).forEach(([login,amount]) => {
         if (opt.id===winOptId && winPool>0) {
-          const payout=(amount/winPool)*total;
           const cur=s.participants?.[login]?.balance||0;
-          updates[`sessions/${sessionCode}/participants/${login}/balance`]=+(cur+payout).toFixed(2);
+          updates[`sessions/${sessionCode}/participants/${login}/balance`]=+(cur+(amount/winPool)*total).toFixed(2);
         }
       });
     });
     await update(ref(getDb()),updates);
-    showToast(lang==="fr"?"🏆 Gains distribués !":"🏆 Winnings distributed!");
+    showToast("🏆 Gains distribués !");
   }
 
   async function handleBet(marketId, optionId, amount) {
@@ -398,10 +257,10 @@ export default function App() {
     const s = snap.val();
     const participant = s.participants?.[twitchUser.login];
     if (!participant) return showToast("Participant introuvable.","err");
-    if (amount>participant.balance) return showToast(lang==="fr"?"Solde insuffisant.":"Insufficient balance.","err");
+    if (amount>participant.balance) return showToast("Solde insuffisant.","err");
     const market = s.markets?.[marketId];
-    if (!market||market.status!=="open") return showToast(lang==="fr"?"Paris fermés.":"Bets closed.","err");
-    if (Object.values(market.options||{}).some(o=>o.bettors?.[twitchUser.login])) return showToast(lang==="fr"?"Tu as déjà parié.":"Already bet.","err");
+    if (!market||market.status!=="open") return showToast("Paris fermés.","err");
+    if (Object.values(market.options||{}).some(o=>o.bettors?.[twitchUser.login])) return showToast("Tu as déjà parié.","err");
     const opt = market.options[optionId];
     const updates = {};
     updates[`sessions/${sessionCode}/markets/${marketId}/options/${optionId}/pool`]=(opt.pool||0)+amount;
@@ -409,14 +268,14 @@ export default function App() {
     updates[`sessions/${sessionCode}/markets/${marketId}/totalPool`]=(market.totalPool||0)+amount;
     updates[`sessions/${sessionCode}/participants/${twitchUser.login}/balance`]=+(participant.balance-amount).toFixed(2);
     await update(ref(getDb()),updates);
-    showToast(`${lang==="fr"?"Pari de":"Bet of"} ${fmt(amount)} ₿ !`);
+    showToast(`Pari de ${fmt(amount)} ₿ placé !`);
   }
 
   function logout() { LS.del("bv_user"); setTwitchUser(null); setView("home"); setSession(null); setSessionCode(null); if(unsub.current) unsub.current(); }
-  function toggleLang() { 
-    const langs = ["fr", "en", "es"];
-    const next = langs[(langs.indexOf(lang) + 1) % langs.length];
-    setLang(next); LS.set("bv_lang", next); 
+  function toggleLang() {
+    const langs=["fr","en","es"];
+    const next=langs[(langs.indexOf(lang)+1)%langs.length];
+    setLang(next); LS.set("bv_lang",next);
   }
 
   const isStreamer = session?.streamerLogin === twitchUser?.login;
@@ -425,7 +284,7 @@ export default function App() {
     <div style={S.root}>
       <style>{CSS}</style>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
-      <Nav user={twitchUser} onLogout={logout} onHome={()=>{setView("home");}} session={session} isStreamer={isStreamer} onDash={()=>setView(isStreamer?"streamer":"viewer")} lang={lang} onToggleLang={toggleLang} t={t} />
+      <Nav user={twitchUser} onLogout={logout} onHome={()=>setView("home")} session={session} isStreamer={isStreamer} onDash={()=>setView(isStreamer?"streamer":"viewer")} lang={lang} onToggleLang={toggleLang} t={t} />
       <main style={S.main}>
         {authLoading && <Loader />}
         {authError && <ErrorBanner msg={authError} onDismiss={()=>setAuthError("")} />}
@@ -438,16 +297,15 @@ export default function App() {
   );
 }
 
-// ─── NAV ──────────────────────────────────────────────────────────────────────
 function Nav({ user, onLogout, onHome, session, isStreamer, onDash, lang, onToggleLang, t }) {
   const mobile = useIsMobile();
   return (
-    <nav style={{...S.nav, padding: mobile?"10px 14px":"14px 28px"}}>
+    <nav style={{...S.nav, padding:mobile?"10px 14px":"12px 28px"}}>
       <div style={S.navBrand} onClick={onHome}>
-        <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/logo.png.PNG" alt="BETterviewer" style={{height:mobile?34:52,width:"auto",objectFit:"contain"}} />
+        <img src={LOGO} alt="BETterviewer" style={{height:mobile?40:60, width:"auto", objectFit:"contain"}} />
         {session && (
           <div style={S.sessionPill}>
-            {session.status==="live" ? <><span style={S.liveDot}/>LIVE</> : session.status==="lobby"?"LOBBY":t.ended}
+            {session.status==="live"?<><span style={S.liveDot}/>LIVE</>:session.status==="lobby"?"LOBBY":t.ended}
             <span style={{opacity:.4}}>·</span>
             <span style={{fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#9146ff"}}>{session.code}</span>
           </div>
@@ -455,15 +313,15 @@ function Nav({ user, onLogout, onHome, session, isStreamer, onDash, lang, onTogg
       </div>
       <div style={S.navRight}>
         {session && <button style={S.navBtn} onClick={onDash}>{isStreamer?t.dashboard:t.mySession}</button>}
-        <button style={{...S.iconBtn, fontSize:13, fontWeight:700, padding:"4px 10px", border:"1px solid #2a2a3e", borderRadius:6}} onClick={onToggleLang}>
-          {lang==="fr"?"🇬🇧 EN": lang==="en"?"🇪🇸 ES":"🇫🇷 FR"}
+        <button style={{background:"#18182a",border:"1px solid #2a2a3e",color:"#d1d5db",padding:"5px 12px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:700}} onClick={onToggleLang}>
+          {lang==="fr"?"🇬🇧 EN":lang==="en"?"🇪🇸 ES":"🇫🇷 FR"}
         </button>
         {user ? (
           <div style={S.userChip}>
-            <img src={user.avatar} style={{...S.ava, border: user.platform==="kick"?"2px solid #53fc18":"2px solid #9146ff"}} alt="" />
+            <img src={user.avatar} style={{...S.ava,border:user.platform==="kick"?"2px solid #53fc18":"2px solid #9146ff"}} alt="" />
             <span style={S.uname}>{user.displayName}</span>
             {user.platform==="kick" && <span style={{fontSize:10,color:"#53fc18",background:"rgba(83,252,24,.15)",padding:"1px 6px",borderRadius:10}}>KICK</span>}
-            <button style={S.logoutBtn} onClick={onLogout} title="Déconnexion">↩</button>
+            <button style={S.logoutBtn} onClick={onLogout}>↩</button>
           </div>
         ) : <span style={S.guestTxt}>{lang==="fr"?"Non connecté":"Not signed in"}</span>}
       </div>
@@ -471,11 +329,10 @@ function Nav({ user, onLogout, onHome, session, isStreamer, onDash, lang, onTogg
   );
 }
 
-// ─── HOME ─────────────────────────────────────────────────────────────────────
 function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
-  const [code, setCode]     = useState("");
+  const [code, setCode]         = useState("");
   const [kickPseudo, setKickPseudo] = useState("");
-  const [showKick, setShowKick]     = useState(false);
+  const [showKick, setShowKick] = useState(false);
   const mobile = useIsMobile();
 
   return (
@@ -484,9 +341,8 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
         <div style={S.heroBlob}/><div style={S.heroBlob2}/>
         <div style={{position:"relative"}}>
           <div style={S.heroBadge}>🎮 {t.tagline}</div>
-          <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/logo.png.PNG" alt="BETterviewer"
-            style={{width:"100%",maxWidth:mobile?"280px":"480px",margin:"16px auto",display:"block"}} />
-          <p style={{...S.heroSub, whiteSpace:"pre-line"}}>{t.heroSub}</p>
+          <img src={LOGO} alt="BETterviewer" style={{width:"100%",maxWidth:mobile?260:440,margin:"12px auto",display:"block"}} />
+          <p style={{...S.heroSub,whiteSpace:"pre-line"}}>{t.heroSub}</p>
         </div>
       </div>
 
@@ -494,7 +350,7 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
         <div style={S.loginBox}>
           <p style={S.loginHint}>{t.loginHint}</p>
           <button style={S.twitchBtn} onClick={onLogin}><TwitchSVG />{t.loginTwitch}</button>
-          <div style={{margin:"16px 0", color:"#4b5563", fontSize:13}}>— ou —</div>
+          <div style={{margin:"16px 0",color:"#4b5563",fontSize:13}}>— ou —</div>
           {!showKick ? (
             <button style={S.kickBtn} onClick={()=>setShowKick(true)}><KickSVG />{t.loginKick}</button>
           ) : (
@@ -507,19 +363,23 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
           )}
         </div>
       ) : (
-        <div className="cards2" style={{...S.cards2, gridTemplateColumns: mobile?"1fr":"1fr auto 1fr"}}>
+        <div className="cards2" style={{...S.cards2,gridTemplateColumns:mobile?"1fr":"1fr auto 1fr"}}>
+          {/* STREAMER CARD */}
           <div style={S.roleCard}>
-            <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/streamer.PNG"
-              alt="Streamer" style={{width:"100%", maxWidth:260, display:"block", margin:"0 auto 16px", mixBlendMode:"screen"}} />
+            <div style={S.roleImgWrap}>
+              <img src={IMG_STREAMER} alt="Streamer" style={S.roleImg} />
+            </div>
             <p style={S.roleDesc}>{t.streamerDesc}</p>
-            <button style={S.primaryBtn} onClick={onCreate}>{t.createSession}</button>
+            <button style={{...S.primaryBtn,width:"100%"}} onClick={onCreate}>{t.createSession}</button>
           </div>
           {!mobile && <div style={S.roleDivider}>ou</div>}
+          {/* VIEWER CARD */}
           <div style={S.roleCard}>
-            <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/viewer.PNG"
-              alt="Viewer" style={{width:"100%", maxWidth:260, display:"block", margin:"0 auto 16px", mixBlendMode:"screen"}} />
+            <div style={S.roleImgWrap}>
+              <img src={IMG_VIEWER} alt="Viewer" style={S.roleImg} />
+            </div>
             <p style={S.roleDesc}>{t.viewerDesc}</p>
-            <div style={S.joinRow}>
+            <div style={{display:"flex",gap:8,width:"100%"}}>
               <input style={S.codeInput} placeholder={t.codePlaceholder} maxLength={6}
                 value={code} onChange={e=>setCode(e.target.value.toUpperCase())}
                 onKeyDown={e=>e.key==="Enter"&&onJoin(code)} />
@@ -532,7 +392,6 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
   );
 }
 
-// ─── STREAMER DASH ────────────────────────────────────────────────────────────
 function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResolveMarket, onStartLive, onEndSession }) {
   const [tab, setTab]     = useState("markets");
   const [title, setTitle] = useState("");
@@ -552,7 +411,7 @@ function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResol
 
   return (
     <div style={S.dashWrap}>
-      <div style={{...S.topBar, flexDirection:mobile?"column":"row"}}>
+      <div style={{...S.topBar,flexDirection:mobile?"column":"row"}}>
         <div>
           <div style={{...S.topCode,fontSize:mobile?"24px":"38px"}}>{session.code}</div>
           <div style={S.topMeta}>{participants.length} {t.viewers} · {markets.length} marchés</div>
@@ -560,41 +419,39 @@ function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResol
         <div style={{...S.topActions,width:mobile?"100%":"auto",flexWrap:"wrap"}}>
           <button style={S.ghostBtn} onClick={()=>copy(session.link,"link")}>{copied==="link"?t.copied:t.copyLink}</button>
           <button style={S.ghostBtn} onClick={()=>copy(session.code,"code")}>{copied==="code"?t.copied:t.copyCode}</button>
-          {session.status==="lobby" && <button style={S.goLiveBtn} onClick={onStartLive}>{t.goLive}</button>}
-          {session.status==="live"  && <button style={S.endBtn} onClick={onEndSession}>{t.endSession}</button>}
+          {session.status==="lobby"&&<button style={S.goLiveBtn} onClick={onStartLive}>{t.goLive}</button>}
+          {session.status==="live"&&<button style={S.endBtn} onClick={onEndSession}>{t.endSession}</button>}
         </div>
       </div>
-
       <div style={S.tabs}>
         {[["markets",`📊 ${t.markets}`],["create",`➕ ${t.create}`],["lb",`🏆 ${t.leaderboard}`]].map(([k,l])=>(
           <button key={k} style={{...S.tab,...(tab===k?S.tabOn:{})}} onClick={()=>setTab(k)}>{l}</button>
         ))}
       </div>
-
       {tab==="markets" && (
         <div>
-          {markets.length===0 && <Empty msg={t.noMarket} action={t.noMarketAction} onAction={()=>setTab("create")} />}
-          {markets.map(m=><AdminMarketCard key={m.id} market={m} t={t} onClose={onCloseMarket} onResolve={onResolveMarket} />)}
+          {markets.length===0&&<Empty msg={t.noMarket} action={t.noMarketAction} onAction={()=>setTab("create")}/>}
+          {markets.map(m=><AdminMarketCard key={m.id} market={m} t={t} onClose={onCloseMarket} onResolve={onResolveMarket}/>)}
         </div>
       )}
       {tab==="create" && (
         <div style={S.card}>
           <h3 style={S.cardH}>{t.create}</h3>
           <label style={S.label}>{t.question}</label>
-          <input style={S.input} placeholder={t.questionPlaceholder} value={title} onChange={e=>setTitle(e.target.value)} />
+          <input style={S.input} placeholder={t.questionPlaceholder} value={title} onChange={e=>setTitle(e.target.value)}/>
           <label style={S.label}>{t.options}</label>
           {opts.map((o,i)=>(
             <div key={i} style={{display:"flex",gap:8,marginBottom:8}}>
               <input style={{...S.input,flex:1,marginBottom:0}} value={o} placeholder={`Option ${i+1}`}
-                onChange={e=>{const a=[...opts];a[i]=e.target.value;setOpts(a);}} />
-              {opts.length>2 && <button style={S.rmBtn} onClick={()=>setOpts(opts.filter((_,j)=>j!==i))}>✕</button>}
+                onChange={e=>{const a=[...opts];a[i]=e.target.value;setOpts(a);}}/>
+              {opts.length>2&&<button style={S.rmBtn} onClick={()=>setOpts(opts.filter((_,j)=>j!==i))}>✕</button>}
             </div>
           ))}
-          {opts.length<6 && <button style={S.addBtn} onClick={()=>setOpts([...opts,""])}>{t.addOption}</button>}
+          {opts.length<6&&<button style={S.addBtn} onClick={()=>setOpts([...opts,""])}>{t.addOption}</button>}
           <button style={{...S.primaryBtn,width:"100%",marginTop:20}} onClick={submit}>{t.openMarket}</button>
         </div>
       )}
-      {tab==="lb" && <Leaderboard participants={participants} t={t} />}
+      {tab==="lb"&&<Leaderboard participants={participants} t={t}/>}
     </div>
   );
 }
@@ -604,7 +461,7 @@ function AdminMarketCard({ market, t, onClose, onResolve }) {
   const total = market.totalPool||0;
   return (
     <div style={S.mCard}>
-      <div style={S.mTop}><span style={S.mTitle}>{market.title}</span><StatusBadge status={market.status} t={t} /></div>
+      <div style={S.mTop}><span style={S.mTitle}>{market.title}</span><StatusBadge status={market.status} t={t}/></div>
       <div style={S.optGrid}>
         {opts.map(opt=>{
           const pct=total>0?Math.round((opt.pool/total)*100):Math.round(100/opts.length);
@@ -620,8 +477,8 @@ function AdminMarketCard({ market, t, onClose, onResolve }) {
       <div style={S.mFoot}>
         <span style={S.mTotal}>{t.totalPool}: {fmt(total)} ₿</span>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          {market.status==="open" && <button style={S.closeBtn} onClick={()=>onClose(market.id)}>{t.closeBets}</button>}
-          {market.status==="closed" && opts.map(opt=>(
+          {market.status==="open"&&<button style={S.closeBtn} onClick={()=>onClose(market.id)}>{t.closeBets}</button>}
+          {market.status==="closed"&&opts.map(opt=>(
             <button key={opt.id} style={S.resolveBtn} onClick={()=>onResolve(market.id,opt.id)}>{t.resolve} {opt.label}</button>
           ))}
         </div>
@@ -630,7 +487,6 @@ function AdminMarketCard({ market, t, onClose, onResolve }) {
   );
 }
 
-// ─── VIEWER DASH ──────────────────────────────────────────────────────────────
 function ViewerDash({ session, user, t, onBet }) {
   const [tab, setTab] = useState("markets");
   const mobile = useIsMobile();
@@ -641,33 +497,33 @@ function ViewerDash({ session, user, t, onBet }) {
 
   return (
     <div style={S.dashWrap}>
-      <div style={{...S.viewerTopBar, flexDirection:mobile?"column":"row"}}>
+      <div style={{...S.viewerTopBar,flexDirection:mobile?"column":"row"}}>
         <div style={S.viewerLeft}>
-          <img src={user.avatar} style={S.bigAva} alt="" />
+          <img src={user.avatar} style={S.bigAva} alt=""/>
           <div>
             <div style={S.viewerName}>{user.displayName}</div>
             <div style={S.viewerSub}>{t.sessionOf} <b>{session.streamerName}</b></div>
           </div>
         </div>
         <div style={{...S.statsRow,width:mobile?"100%":"auto",justifyContent:mobile?"space-around":"flex-end"}}>
-          <Stat val={`${fmt(me?.balance??STARTING_BALANCE)} ₿`} label={t.balance} accent />
-          <Stat val={`#${rank}`} label={t.rank} />
-          <Stat val={participants.length} label={t.players} />
+          <Stat val={`${fmt(me?.balance??STARTING_BALANCE)} ₿`} label={t.balance} accent/>
+          <Stat val={`#${rank}`} label={t.rank}/>
+          <Stat val={participants.length} label={t.players}/>
         </div>
       </div>
-      {session.status==="lobby" && <div style={S.lobbyBanner}>⏳ {t.waitingLobby}</div>}
+      {session.status==="lobby"&&<div style={S.lobbyBanner}>⏳ {t.waitingLobby}</div>}
       <div style={S.tabs}>
         {[["markets",`📊 ${t.bets}`],["lb",`🏆 ${t.leaderboard}`]].map(([k,l])=>(
           <button key={k} style={{...S.tab,...(tab===k?S.tabOn:{})}} onClick={()=>setTab(k)}>{l}</button>
         ))}
       </div>
-      {tab==="markets" && (
+      {tab==="markets"&&(
         <div>
-          {markets.length===0 && <Empty msg={t.noMarket} />}
-          {markets.map(m=><ViewerMarketCard key={m.id} market={m} user={user} balance={me?.balance??0} t={t} onBet={onBet} />)}
+          {markets.length===0&&<Empty msg={t.noMarket}/>}
+          {markets.map(m=><ViewerMarketCard key={m.id} market={m} user={user} balance={me?.balance??0} t={t} onBet={onBet}/>)}
         </div>
       )}
-      {tab==="lb" && <Leaderboard participants={participants} highlightLogin={user.login} t={t} />}
+      {tab==="lb"&&<Leaderboard participants={participants} highlightLogin={user.login} t={t}/>}
     </div>
   );
 }
@@ -688,7 +544,7 @@ function ViewerMarketCard({ market, user, balance, t, onBet }) {
 
   return (
     <div style={S.mCard}>
-      <div style={S.mTop}><span style={S.mTitle}>{market.title}</span><StatusBadge status={market.status} t={t} /></div>
+      <div style={S.mTop}><span style={S.mTitle}>{market.title}</span><StatusBadge status={market.status} t={t}/></div>
       <div style={S.optGrid}>
         {opts.map(opt=>{
           const pct=total>0?Math.round((opt.pool/total)*100):Math.round(100/opts.length);
@@ -710,10 +566,10 @@ function ViewerMarketCard({ market, user, balance, t, onBet }) {
           );
         })}
       </div>
-      {canBet && sel && (
+      {canBet&&sel&&(
         <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:14}}>
           <input style={S.input} type="number" placeholder={`Montant ₿ (max ${fmt(balance)})`} min="1" max={balance}
-            value={amount} onChange={e=>setAmount(e.target.value)} />
+            value={amount} onChange={e=>setAmount(e.target.value)}/>
           <div style={{display:"flex",gap:6}}>
             {[10,50,100,250].map(v=>(
               <button key={v} style={{...S.quickBtn,flex:1}} onClick={()=>setAmount(String(Math.min(v,balance)))}>{v}</button>
@@ -723,13 +579,12 @@ function ViewerMarketCard({ market, user, balance, t, onBet }) {
         </div>
       )}
       {myBetOpt&&market.status==="open"&&(
-        <div style={S.myBetNote}>{t.myBet.replace("←","")} <b>{fmt(myBetOpt.bettors[user.login])} ₿</b> → <b>{myBetOpt.label}</b></div>
+        <div style={S.myBetNote}>Pari: <b>{fmt(myBetOpt.bettors[user.login])} ₿</b> sur <b>{myBetOpt.label}</b></div>
       )}
     </div>
   );
 }
 
-// ─── LEADERBOARD ─────────────────────────────────────────────────────────────
 function Leaderboard({ participants, highlightLogin, t }) {
   return (
     <div style={S.card}>
@@ -737,7 +592,7 @@ function Leaderboard({ participants, highlightLogin, t }) {
       {participants.map((p,i)=>(
         <div key={p.login} style={{...S.lbRow,...(p.login===highlightLogin?S.lbMe:{})}}>
           <span style={S.lbRank}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`}</span>
-          <img src={p.avatar} style={S.lbAva} alt="" onError={e=>e.target.style.display="none"} />
+          <img src={p.avatar} style={S.lbAva} alt="" onError={e=>e.target.style.display="none"}/>
           <span style={S.lbName}>{p.displayName}</span>
           <span style={S.lbBal}>{fmt(p.balance)} ₿</span>
           <span style={{fontSize:11,color:p.balance>=STARTING_BALANCE?"#4ade80":"#f87171"}}>
@@ -749,7 +604,6 @@ function Leaderboard({ participants, highlightLogin, t }) {
   );
 }
 
-// ─── RESULTS ─────────────────────────────────────────────────────────────────
 function ResultsPage({ session, user, t, onHome }) {
   const sorted = Object.values(session.participants||{}).sort((a,b)=>b.balance-a.balance);
   const winner = sorted[0];
@@ -759,7 +613,7 @@ function ResultsPage({ session, user, t, onHome }) {
       <div style={S.resGlow}/>
       <h1 style={S.resTitle}>{t.streamEnded}</h1>
       <p style={S.resSub}>{session.code} · {sorted.length} {t.players}</p>
-      {winner && (
+      {winner&&(
         <div style={S.winCard}>
           <div style={{fontSize:48,marginBottom:8}}>👑</div>
           <img src={winner.avatar} style={S.winAva} alt=""/>
@@ -768,14 +622,13 @@ function ResultsPage({ session, user, t, onHome }) {
           <div style={S.winLabel}>{t.winner}</div>
         </div>
       )}
-      {myRank>0 && <p style={S.myRank}>{t.myRank} : <b style={{color:"#9146ff"}}>#{myRank}</b> / {sorted.length}</p>}
-      <div style={{maxWidth:500,margin:"24px auto"}}><Leaderboard participants={sorted} highlightLogin={user?.login} t={t} /></div>
+      {myRank>0&&<p style={S.myRank}>{t.myRank} : <b style={{color:"#9146ff"}}>#{myRank}</b> / {sorted.length}</p>}
+      <div style={{maxWidth:500,margin:"24px auto"}}><Leaderboard participants={sorted} highlightLogin={user?.login} t={t}/></div>
       <button style={{...S.primaryBtn,margin:"0 auto 60px",display:"block"}} onClick={onHome}>{t.backHome}</button>
     </div>
   );
 }
 
-// ─── SMALL COMPONENTS ────────────────────────────────────────────────────────
 function StatusBadge({ status, t }) {
   if (status==="open")     return <span style={S.badgeOpen}>{t.open}</span>;
   if (status==="closed")   return <span style={S.badgeClosed}>{t.closed}</span>;
@@ -786,7 +639,7 @@ function Stat({ val, label, accent }) {
   return <div style={S.statBox}><div style={{...S.statVal,...(accent?{color:"#9146ff"}:{})}}>{val}</div><div style={S.statLab}>{label}</div></div>;
 }
 function Empty({ msg, action, onAction }) {
-  return <div style={S.empty}>{msg} {action&&<span style={S.emptyLink} onClick={onAction}>{action}</span>}</div>;
+  return <div style={S.empty}>{msg}{action&&<span style={S.emptyLink} onClick={onAction}> {action}</span>}</div>;
 }
 function Loader() { return <div style={S.loader}><span className="spin">◈</span></div>; }
 function ErrorBanner({ msg, onDismiss }) {
@@ -803,7 +656,6 @@ function KickSVG() {
   </svg>;
 }
 
-// ─── STYLES ──────────────────────────────────────────────────────────────────
 const S = {
   root:{ minHeight:"100vh", background:"#07070f", color:"#f0f0f8", fontFamily:"'Syne','Trebuchet MS',sans-serif" },
   nav:{ display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid #18182a", background:"rgba(7,7,15,0.97)", position:"sticky", top:0, zIndex:100, backdropFilter:"blur(16px)", gap:12, flexWrap:"wrap" },
@@ -812,15 +664,14 @@ const S = {
   liveDot:{ width:7, height:7, borderRadius:"50%", background:"#4ade80", boxShadow:"0 0 8px #4ade80", display:"inline-block" },
   navRight:{ display:"flex", alignItems:"center", gap:8 },
   navBtn:{ background:"#18182a", border:"1px solid #2a2a3e", color:"#d1d5db", padding:"6px 14px", borderRadius:6, cursor:"pointer", fontSize:13 },
-  iconBtn:{ background:"none", border:"none", color:"#6b7280", cursor:"pointer", fontSize:18, padding:"4px 8px" },
   userChip:{ display:"flex", alignItems:"center", gap:8, background:"#18182a", border:"1px solid #2a2a3e", borderRadius:24, padding:"3px 12px 3px 3px" },
   ava:{ width:30, height:30, borderRadius:"50%", objectFit:"cover" },
   uname:{ fontSize:13, fontWeight:700 },
   logoutBtn:{ background:"none", border:"none", color:"#6b7280", cursor:"pointer", fontSize:15, padding:0 },
   guestTxt:{ fontSize:13, color:"#4b5563" },
   main:{ maxWidth:960, margin:"0 auto", padding:"clamp(16px,4vw,40px) clamp(12px,3vw,20px)" },
-  homeWrap:{ maxWidth:680, margin:"0 auto" },
-  hero:{ position:"relative", textAlign:"center", padding:"48px 20px 40px", overflow:"hidden" },
+  homeWrap:{ maxWidth:700, margin:"0 auto" },
+  hero:{ position:"relative", textAlign:"center", padding:"40px 20px 32px", overflow:"hidden" },
   heroBlob:{ position:"absolute", top:"10%", left:"20%", width:320, height:180, background:"radial-gradient(ellipse,rgba(145,70,255,.18) 0%,transparent 70%)", pointerEvents:"none" },
   heroBlob2:{ position:"absolute", bottom:0, right:"15%", width:240, height:160, background:"radial-gradient(ellipse,rgba(83,252,24,.08) 0%,transparent 70%)", pointerEvents:"none" },
   heroBadge:{ display:"inline-block", fontSize:12, background:"rgba(145,70,255,.12)", border:"1px solid rgba(145,70,255,.3)", color:"#a78bfa", padding:"5px 14px", borderRadius:20, marginBottom:12, letterSpacing:"0.05em" },
@@ -829,14 +680,14 @@ const S = {
   loginHint:{ color:"#6b7280", fontSize:14, marginBottom:20 },
   twitchBtn:{ display:"inline-flex", alignItems:"center", background:"#9146ff", color:"#fff", border:"none", borderRadius:8, padding:"13px 30px", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8 },
   kickBtn:{ display:"inline-flex", alignItems:"center", background:"#53fc18", color:"#000", border:"none", borderRadius:8, padding:"13px 30px", fontSize:15, fontWeight:800, cursor:"pointer" },
+  // Role cards — equal height, centered content
   cards2:{ display:"grid", gap:20, alignItems:"stretch" },
-  roleCard:{ background:"#0d0d1a", border:"1px solid #18182a", borderRadius:14, padding:28, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"space-between" },
+  roleCard:{ background:"#0d0d1a", border:"1px solid #18182a", borderRadius:14, padding:24, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"space-between", gap:16 },
+  roleImgWrap:{ width:"100%", height:100, display:"flex", alignItems:"center", justifyContent:"center" },
+  roleImg:{ maxWidth:"100%", height:90, objectFit:"contain", mixBlendMode:"screen" },
+  roleDesc:{ fontSize:13, color:"#6b7280", lineHeight:1.6, textAlign:"center", margin:0, flex:1 },
   roleDivider:{ textAlign:"center", color:"#2a2a3e", fontSize:13, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" },
-  roleIcon:{ fontSize:36, marginBottom:12 },
-  roleLabel:{ fontSize:18, fontWeight:800, marginBottom:8 },
-  roleDesc:{ fontSize:13, color:"#6b7280", marginBottom:20, lineHeight:1.6, textAlign:"center" },
   primaryBtn:{ background:"linear-gradient(135deg,#6d28d9,#9146ff)", border:"none", color:"#fff", borderRadius:8, padding:"11px 24px", fontSize:14, fontWeight:800, cursor:"pointer" },
-  joinRow:{ display:"flex", gap:8, width:"100%" },
   codeInput:{ background:"#18182a", border:"1px solid #2a2a3e", borderRadius:8, color:"#f0f0f8", padding:"11px 14px", fontSize:18, fontFamily:"'DM Mono',monospace", letterSpacing:"0.2em", outline:"none", flex:1, minWidth:0, textTransform:"uppercase" },
   joinBtn:{ background:"#9146ff", border:"none", color:"#fff", borderRadius:8, padding:"11px 20px", cursor:"pointer", fontWeight:900, fontSize:15 },
   dashWrap:{ maxWidth:720, margin:"0 auto" },
@@ -905,7 +756,7 @@ const S = {
   winLabel:{ fontSize:12, color:"#4ade80", letterSpacing:"0.15em", textTransform:"uppercase" },
   myRank:{ fontSize:16, color:"#9ca3af", marginBottom:8 },
   empty:{ textAlign:"center", color:"#4b5563", padding:"40px 0", fontSize:14 },
-  emptyLink:{ color:"#9146ff", cursor:"pointer", marginLeft:4 },
+  emptyLink:{ color:"#9146ff", cursor:"pointer" },
   loader:{ textAlign:"center", color:"#9146ff", padding:60, fontSize:24 },
   errBanner:{ background:"#2d0a0a", border:"1px solid #b91c1c", borderRadius:8, padding:"12px 18px", color:"#f87171", fontSize:14, marginBottom:20, display:"flex", justifyContent:"space-between", alignItems:"center" },
   errClose:{ background:"none", border:"none", color:"#f87171", cursor:"pointer", fontSize:16 },
@@ -916,7 +767,6 @@ const CSS = `
   *{box-sizing:border-box;}body{margin:0;}
   input:focus,textarea:focus{border-color:#9146ff!important;box-shadow:0 0 0 2px rgba(145,70,255,.15);}
   button:hover{filter:brightness(1.1);}
-  a{color:#9146ff;}
   .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:8px;font-size:14px;font-family:'Syne',sans-serif;z-index:9999;animation:fadeUp .2s ease;max-width:340px;line-height:1.5;}
   .toast-ok{background:#052e16;border:1px solid #4ade80;color:#4ade80;}
   .toast-err{background:#2d0a0a;border:1px solid #f87171;color:#f87171;}
@@ -924,7 +774,5 @@ const CSS = `
   .spin{display:inline-block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
   ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:#07070f;}::-webkit-scrollbar-thumb{background:#2a2a3e;border-radius:3px;}
-  @media(max-width:640px){
-    .cards2{grid-template-columns:1fr!important;}
-  }
+  @media(max-width:640px){.cards2{grid-template-columns:1fr!important;}}
 `;
