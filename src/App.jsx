@@ -14,6 +14,7 @@ const FIREBASE_CONFIG = {
 const TWITCH_CLIENT_ID = "d3313alwndj6mxi27aehgh6swizpk3";
 const REDIRECT_URI = "https://betterviewer.vercel.app/";
 const STARTING_BALANCE = 1000;
+const COIN = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/coin.PNG";
 const LOGO = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/logo.png.PNG";
 const IMG_STREAMER = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/streamer.PNG";
 const IMG_VIEWER = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/viewer.PNG";
@@ -268,7 +269,7 @@ export default function App() {
     updates[`sessions/${sessionCode}/markets/${marketId}/totalPool`]=(market.totalPool||0)+amount;
     updates[`sessions/${sessionCode}/participants/${twitchUser.login}/balance`]=+(participant.balance-amount).toFixed(2);
     await update(ref(getDb()),updates);
-    showToast(`Pari de ${fmt(amount)} ₿ placé !`);
+    showToast(`Pari de ${fmt(amount)} coins placé !`);
   }
 
   function logout() { LS.del("bv_user"); setTwitchUser(null); setView("home"); setSession(null); setSessionCode(null); if(unsub.current) unsub.current(); }
@@ -366,18 +367,14 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
         <div className="cards2" style={{...S.cards2,gridTemplateColumns:mobile?"1fr":"1fr auto 1fr"}}>
           {/* STREAMER CARD */}
           <div style={S.roleCard}>
-            <div style={{width:"100%", height:mobile?100:160, display:"flex", alignItems:"center", justifyContent:"center"}}>
-              <img src={IMG_STREAMER} alt="Streamer" style={{maxWidth:"100%", height:mobile?90:150, objectFit:"contain", mixBlendMode:"screen"}} />
-            </div>
+            <img src={IMG_STREAMER} alt="Streamer" style={{width:"100%", maxWidth:mobile?200:320, height:"auto", display:"block", margin:"0 auto 8px"}} />
             <p style={S.roleDesc}>{t.streamerDesc}</p>
             <button style={{...S.primaryBtn,width:"100%"}} onClick={onCreate}>{t.createSession}</button>
           </div>
           {!mobile && <div style={S.roleDivider}>ou</div>}
           {/* VIEWER CARD */}
           <div style={S.roleCard}>
-            <div style={{width:"100%", height:mobile?100:160, display:"flex", alignItems:"center", justifyContent:"center"}}>
-              <img src={IMG_VIEWER} alt="Viewer" style={{maxWidth:"100%", height:mobile?90:150, objectFit:"contain", mixBlendMode:"screen"}} />
-            </div>
+            <img src={IMG_VIEWER} alt="Viewer" style={{width:"100%", maxWidth:mobile?200:320, height:"auto", display:"block", margin:"0 auto 8px"}} />
             <p style={S.roleDesc}>{t.viewerDesc}</p>
             <div style={{display:"flex",gap:8,width:"100%"}}>
               <input style={S.codeInput} placeholder={t.codePlaceholder} maxLength={6}
@@ -469,13 +466,13 @@ function AdminMarketCard({ market, t, onClose, onResolve }) {
             <div key={opt.id} style={{...S.optRow,...(market.winner===opt.id?S.optWinner:{})}}>
               <div style={S.optTop}><span>{opt.label}</span><b style={S.optPct}>{pct}%</b></div>
               <div style={S.progWrap}><div style={{...S.progBar,width:`${pct}%`}}/></div>
-              <div style={S.optSub}>{fmt(opt.pool)} ₿ · {Object.keys(opt.bettors||{}).length} paris</div>
+              <div style={S.optSub}>{fmt(opt.pool)} <Coin size={13}/> · {Object.keys(opt.bettors||{}).length} paris</div>
             </div>
           );
         })}
       </div>
       <div style={S.mFoot}>
-        <span style={S.mTotal}>{t.totalPool}: {fmt(total)} ₿</span>
+        <span style={S.mTotal}>{t.totalPool}: {fmt(total)} <Coin size={13}/></span>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           {market.status==="open"&&<button style={S.closeBtn} onClick={()=>onClose(market.id)}>{t.closeBets}</button>}
           {market.status==="closed"&&opts.map(opt=>(
@@ -506,7 +503,7 @@ function ViewerDash({ session, user, t, onBet }) {
           </div>
         </div>
         <div style={{...S.statsRow,width:mobile?"100%":"auto",justifyContent:mobile?"space-around":"flex-end"}}>
-          <Stat val={`${fmt(me?.balance??STARTING_BALANCE)} ₿`} label={t.balance} accent/>
+          <Stat val={<span>{fmt(me?.balance??STARTING_BALANCE)} <Coin size={18}/></span>} label={t.balance} accent/>
           <Stat val={`#${rank}`} label={t.rank}/>
           <Stat val={participants.length} label={t.players}/>
         </div>
@@ -560,7 +557,7 @@ function ViewerMarketCard({ market, user, balance, t, onBet }) {
               <div style={S.progWrap}><div style={{...S.progBar,width:`${pct}%`}}/></div>
               <div style={S.optSub}>
                 ×{total>0&&opt.pool>0?(total/opt.pool).toFixed(2):"∞"}
-                {isMine&&<span style={{color:"#9146ff",marginLeft:8}}>{fmt(myBetOpt.bettors[user.login])} ₿</span>}
+                {isMine&&<span style={{color:"#9146ff",marginLeft:8}}>{fmt(myBetOpt.bettors[user.login])} <Coin size={13}/></span>}
               </div>
             </div>
           );
@@ -568,7 +565,7 @@ function ViewerMarketCard({ market, user, balance, t, onBet }) {
       </div>
       {canBet&&sel&&(
         <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:14}}>
-          <input style={S.input} type="number" placeholder={`Montant ₿ (max ${fmt(balance)})`} min="1" max={balance}
+          <input style={S.input} type="number" placeholder={`Montant (max ${fmt(balance)})`} min="1" max={balance}
             value={amount} onChange={e=>setAmount(e.target.value)}/>
           <div style={{display:"flex",gap:6}}>
             {[10,50,100,250].map(v=>(
@@ -579,7 +576,7 @@ function ViewerMarketCard({ market, user, balance, t, onBet }) {
         </div>
       )}
       {myBetOpt&&market.status==="open"&&(
-        <div style={S.myBetNote}>Pari: <b>{fmt(myBetOpt.bettors[user.login])} ₿</b> sur <b>{myBetOpt.label}</b></div>
+        <div style={S.myBetNote}>Pari: <b>{fmt(myBetOpt.bettors[user.login])} <Coin size={13}/></b> sur <b>{myBetOpt.label}</b></div>
       )}
     </div>
   );
@@ -594,9 +591,9 @@ function Leaderboard({ participants, highlightLogin, t }) {
           <span style={S.lbRank}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`}</span>
           <img src={p.avatar} style={S.lbAva} alt="" onError={e=>e.target.style.display="none"}/>
           <span style={S.lbName}>{p.displayName}</span>
-          <span style={S.lbBal}>{fmt(p.balance)} ₿</span>
+          <span style={S.lbBal}>{fmt(p.balance)} <Coin size={14}/></span>
           <span style={{fontSize:11,color:p.balance>=STARTING_BALANCE?"#4ade80":"#f87171"}}>
-            {p.balance>=STARTING_BALANCE?"▲":"▼"} {fmt(Math.abs(p.balance-STARTING_BALANCE))}
+            {p.balance>=STARTING_BALANCE?"▲":"▼"} {fmt(Math.abs(p.balance-STARTING_BALANCE))} <Coin size={11}/>
           </span>
         </div>
       ))}
@@ -618,7 +615,7 @@ function ResultsPage({ session, user, t, onHome }) {
           <div style={{fontSize:48,marginBottom:8}}>👑</div>
           <img src={winner.avatar} style={S.winAva} alt=""/>
           <div style={S.winName}>{winner.displayName}</div>
-          <div style={S.winBal}>{fmt(winner.balance)} ₿</div>
+          <div style={S.winBal}>{fmt(winner.balance)} <Coin size={28}/></div>
           <div style={S.winLabel}>{t.winner}</div>
         </div>
       )}
@@ -654,6 +651,9 @@ function KickSVG() {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{marginRight:8,flexShrink:0}}>
     <path d="M3 2h4v8l5-8h5l-6 9 6 11h-5l-5-9v9H3z"/>
   </svg>;
+}
+function Coin({ size=16 }) {
+  return <img src={COIN} alt="coin" style={{width:size,height:size,objectFit:"contain",verticalAlign:"middle",marginLeft:3,display:"inline"}} />;
 }
 
 const S = {
