@@ -444,7 +444,7 @@ function Nav({ user, onLogout, onHome, session, isStreamer, onDash, lang, onTogg
   return (
     <nav style={{...S.nav, padding: mobile?"10px 14px":"14px 28px"}}>
       <div style={S.navBrand} onClick={onHome}>
-        <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/logo.png.PNG" alt="BETterviewer" style={{height:mobile?28:36,width:"auto",objectFit:"contain"}} />
+        <img src="https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/logo.png.PNG" alt="BETterviewer" style={{height:mobile?34:52,width:"auto",objectFit:"contain"}} />
         {session && (
           <div style={S.sessionPill}>
             {session.status==="live" ? <><span style={S.liveDot}/>LIVE</> : session.status==="lobby"?"LOBBY":t.ended}
@@ -829,12 +829,12 @@ const S = {
   loginHint:{ color:"#6b7280", fontSize:14, marginBottom:20 },
   twitchBtn:{ display:"inline-flex", alignItems:"center", background:"#9146ff", color:"#fff", border:"none", borderRadius:8, padding:"13px 30px", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8 },
   kickBtn:{ display:"inline-flex", alignItems:"center", background:"#53fc18", color:"#000", border:"none", borderRadius:8, padding:"13px 30px", fontSize:15, fontWeight:800, cursor:"pointer" },
-  cards2:{ display:"grid", gap:20 },
-  roleCard:{ background:"#0d0d1a", border:"1px solid #18182a", borderRadius:14, padding:28, display:"flex", flexDirection:"column", alignItems:"flex-start" },
+  cards2:{ display:"grid", gap:20, alignItems:"stretch" },
+  roleCard:{ background:"#0d0d1a", border:"1px solid #18182a", borderRadius:14, padding:28, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"space-between" },
   roleDivider:{ textAlign:"center", color:"#2a2a3e", fontSize:13, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" },
   roleIcon:{ fontSize:36, marginBottom:12 },
   roleLabel:{ fontSize:18, fontWeight:800, marginBottom:8 },
-  roleDesc:{ fontSize:13, color:"#6b7280", marginBottom:20, lineHeight:1.6 },
+  roleDesc:{ fontSize:13, color:"#6b7280", marginBottom:20, lineHeight:1.6, textAlign:"center" },
   primaryBtn:{ background:"linear-gradient(135deg,#6d28d9,#9146ff)", border:"none", color:"#fff", borderRadius:8, padding:"11px 24px", fontSize:14, fontWeight:800, cursor:"pointer" },
   joinRow:{ display:"flex", gap:8, width:"100%" },
   codeInput:{ background:"#18182a", border:"1px solid #2a2a3e", borderRadius:8, color:"#f0f0f8", padding:"11px 14px", fontSize:18, fontFamily:"'DM Mono',monospace", letterSpacing:"0.2em", outline:"none", flex:1, minWidth:0, textTransform:"uppercase" },
