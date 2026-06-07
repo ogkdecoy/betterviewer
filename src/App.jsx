@@ -48,7 +48,7 @@ function useIsMobile() {
 
 const T = {
   fr: {
-    tagline:"Twitch · Paris en direct", heroSub:"Engage tes viewers avec des paris factices en direct.\nLe meilleur gagne le giveaway.",
+    tagline:"💰 Argent factice · Jeu 100% gratuit", heroSub:"Engage tes viewers avec des paris factices en direct.\nLe meilleur gagne le giveaway.",
     loginHint:"Connecte-toi pour créer ou rejoindre une session", loginTwitch:"Se connecter avec Twitch",
     loginKick:"Rejoindre avec Kick", kickPlaceholder:"Ton pseudo Kick", kickJoin:"Rejoindre",
     streamer:"Streamer", streamerDesc:"Lance une session, crée les marchés, désigne le gagnant.",
@@ -67,7 +67,7 @@ const T = {
     dashboard:"Dashboard", mySession:"Ma session",
   },
   en: {
-    tagline:"Twitch · Live Betting", heroSub:"Engage your viewers with live fake bets.\nThe best player wins the giveaway.",
+    tagline:"💰 Fake money · 100% free game", heroSub:"Engage your viewers with live fake bets.\nThe best player wins the giveaway.",
     loginHint:"Sign in to create or join a session", loginTwitch:"Sign in with Twitch",
     loginKick:"Join with Kick", kickPlaceholder:"Your Kick username", kickJoin:"Join",
     streamer:"Streamer", streamerDesc:"Start a session, create markets, pick the winner.",
@@ -86,7 +86,7 @@ const T = {
     dashboard:"Dashboard", mySession:"My session",
   },
   es: {
-    tagline:"Twitch · Apuestas en directo", heroSub:"Involucra a tus viewers con apuestas falsas.\nEl mejor gana el giveaway.",
+    tagline:"💰 Dinero ficticio · Juego 100% gratis", heroSub:"Involucra a tus viewers con apuestas falsas.\nEl mejor gana el giveaway.",
     loginHint:"Conéctate para crear o unirte a una sesión", loginTwitch:"Conectarse con Twitch",
     loginKick:"Unirse con Kick", kickPlaceholder:"Tu nombre de usuario Kick", kickJoin:"Unirse",
     streamer:"Streamer", streamerDesc:"Inicia una sesión, crea mercados, elige al ganador.",
