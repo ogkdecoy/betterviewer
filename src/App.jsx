@@ -15,6 +15,7 @@ const TWITCH_CLIENT_ID = "d3313alwndj6mxi27aehgh6swizpk3";
 const REDIRECT_URI = "https://betterviewer.vercel.app/";
 const STARTING_BALANCE = 1000;
 const COIN = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/coin.PNG";
+const COINS_STACK = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/coins-stack.PNG";
 const LOGO = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/logo.png.PNG";
 const IMG_STREAMER = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/streamer.PNG";
 const IMG_VIEWER = "https://raw.githubusercontent.com/ogkdecoy/Betterviewer/main/public/viewer.PNG";
@@ -343,6 +344,7 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
         <div style={{position:"relative"}}>
           <div style={S.heroBadge}><Coin size={16}/> {t.tagline}</div>
           <img src={LOGO} alt="BETterviewer" style={{width:"100%",maxWidth:mobile?260:440,margin:"12px auto",display:"block"}} />
+          <img src={COINS_STACK} alt="coins" style={{width:mobile?140:200,height:"auto",display:"block",margin:"0 auto 8px",filter:"drop-shadow(0 0 20px rgba(145,70,255,0.4))"}} />
           <p style={{...S.heroSub,whiteSpace:"pre-line"}}>{t.heroSub}</p>
         </div>
       </div>
