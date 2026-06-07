@@ -48,7 +48,7 @@ function useIsMobile() {
 
 const T = {
   fr: {
-    tagline:"💰 Argent factice · Jeu 100% gratuit", heroSub:"Engage tes viewers avec des paris factices en direct.\nLe meilleur gagne le giveaway.",
+    tagline:"Argent factice · Jeu 100% gratuit", heroSub:"Engage tes viewers avec des paris factices en direct.\nLe meilleur gagne le giveaway.",
     loginHint:"Connecte-toi pour créer ou rejoindre une session", loginTwitch:"Se connecter avec Twitch",
     loginKick:"Rejoindre avec Kick", kickPlaceholder:"Ton pseudo Kick", kickJoin:"Rejoindre",
     streamer:"Streamer", streamerDesc:"Lance une session, crée les marchés, désigne le gagnant.",
@@ -67,7 +67,7 @@ const T = {
     dashboard:"Dashboard", mySession:"Ma session",
   },
   en: {
-    tagline:"💰 Fake money · 100% free game", heroSub:"Engage your viewers with live fake bets.\nThe best player wins the giveaway.",
+    tagline:"Fake money · 100% free game", heroSub:"Engage your viewers with live fake bets.\nThe best player wins the giveaway.",
     loginHint:"Sign in to create or join a session", loginTwitch:"Sign in with Twitch",
     loginKick:"Join with Kick", kickPlaceholder:"Your Kick username", kickJoin:"Join",
     streamer:"Streamer", streamerDesc:"Start a session, create markets, pick the winner.",
@@ -86,7 +86,7 @@ const T = {
     dashboard:"Dashboard", mySession:"My session",
   },
   es: {
-    tagline:"💰 Dinero ficticio · Juego 100% gratis", heroSub:"Involucra a tus viewers con apuestas falsas.\nEl mejor gana el giveaway.",
+    tagline:"Dinero ficticio · Juego 100% gratis", heroSub:"Involucra a tus viewers con apuestas falsas.\nEl mejor gana el giveaway.",
     loginHint:"Conéctate para crear o unirte a una sesión", loginTwitch:"Conectarse con Twitch",
     loginKick:"Unirse con Kick", kickPlaceholder:"Tu nombre de usuario Kick", kickJoin:"Unirse",
     streamer:"Streamer", streamerDesc:"Inicia una sesión, crea mercados, elige al ganador.",
@@ -341,7 +341,7 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
       <div style={S.hero}>
         <div style={S.heroBlob}/><div style={S.heroBlob2}/>
         <div style={{position:"relative"}}>
-          <div style={S.heroBadge}>🎮 {t.tagline}</div>
+          <div style={S.heroBadge}><Coin size={16}/> {t.tagline}</div>
           <img src={LOGO} alt="BETterviewer" style={{width:"100%",maxWidth:mobile?260:440,margin:"12px auto",display:"block"}} />
           <p style={{...S.heroSub,whiteSpace:"pre-line"}}>{t.heroSub}</p>
         </div>
@@ -762,7 +762,7 @@ const S = {
   errClose:{ background:"none", border:"none", color:"#f87171", cursor:"pointer", fontSize:16 },
 };
 
-const CSS = ` 
+const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap');
   *{box-sizing:border-box;}body{margin:0;}
   input:focus,textarea:focus{border-color:#9146ff!important;box-shadow:0 0 0 2px rgba(145,70,255,.15);}
