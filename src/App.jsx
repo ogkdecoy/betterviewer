@@ -762,7 +762,7 @@ const S = {
   errClose:{ background:"none", border:"none", color:"#f87171", cursor:"pointer", fontSize:16 },
 };
 
-const CSS = `
+const CSS = ` 
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap');
   *{box-sizing:border-box;}body{margin:0;}
   input:focus,textarea:focus{border-color:#9146ff!important;box-shadow:0 0 0 2px rgba(145,70,255,.15);}
