@@ -366,8 +366,8 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
         <div className="cards2" style={{...S.cards2,gridTemplateColumns:mobile?"1fr":"1fr auto 1fr"}}>
           {/* STREAMER CARD */}
           <div style={S.roleCard}>
-            <div style={S.roleImgWrap}>
-              <img src={IMG_STREAMER} alt="Streamer" style={S.roleImg} />
+            <div style={{width:"100%", height:mobile?100:160, display:"flex", alignItems:"center", justifyContent:"center"}}>
+              <img src={IMG_STREAMER} alt="Streamer" style={{maxWidth:"100%", height:mobile?90:150, objectFit:"contain", mixBlendMode:"screen"}} />
             </div>
             <p style={S.roleDesc}>{t.streamerDesc}</p>
             <button style={{...S.primaryBtn,width:"100%"}} onClick={onCreate}>{t.createSession}</button>
@@ -375,8 +375,8 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
           {!mobile && <div style={S.roleDivider}>ou</div>}
           {/* VIEWER CARD */}
           <div style={S.roleCard}>
-            <div style={S.roleImgWrap}>
-              <img src={IMG_VIEWER} alt="Viewer" style={S.roleImg} />
+            <div style={{width:"100%", height:mobile?100:160, display:"flex", alignItems:"center", justifyContent:"center"}}>
+              <img src={IMG_VIEWER} alt="Viewer" style={{maxWidth:"100%", height:mobile?90:150, objectFit:"contain", mixBlendMode:"screen"}} />
             </div>
             <p style={S.roleDesc}>{t.viewerDesc}</p>
             <div style={{display:"flex",gap:8,width:"100%"}}>
