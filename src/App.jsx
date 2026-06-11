@@ -215,11 +215,11 @@ export default function App() {
   async function handleStartLive() { await update(ref(getDb(),`sessions/${sessionCode}`),{status:"live"}); showToast("Le live a démarré !"); }
   async function handleEndSession() { await update(ref(getDb(),`sessions/${sessionCode}`),{status:"ended"}); setView("results"); }
 
-  async function handleCreateMarket(title, options) {
+  async function handleCreateMarket(title, options, odds) {
     const id = genId();
     const opts = {};
-    options.forEach(label => { const oid=genId(); opts[oid]={id:oid,label,pool:0,bettors:{}}; });
-    await set(ref(getDb(),`sessions/${sessionCode}/markets/${id}`),{id,title,options:opts,status:"open",createdAt:Date.now(),totalPool:0,winner:null});
+    options.forEach(label => { const oid=genId(); opts[oid]={id:oid,label,bettors:{}}; });
+    await set(ref(getDb(),`sessions/${sessionCode}/markets/${id}`),{id,title,options:opts,odds,status:"open",createdAt:Date.now(),winner:null});
     showToast("Marché ouvert !");
   }
 
@@ -230,16 +230,17 @@ export default function App() {
     const s = snap.val();
     const market = s.markets?.[marketId];
     if (!market) return;
-    const winPool = market.options?.[winOptId]?.pool||0;
-    const total = market.totalPool||0;
+    const odds = market.odds || 2;
     const updates = {};
     updates[`sessions/${sessionCode}/markets/${marketId}/status`]="resolved";
     updates[`sessions/${sessionCode}/markets/${marketId}/winner`]=winOptId;
+    // Avec cotes fixes : chaque gagnant reçoit sa mise × la cote
     Object.values(market.options||{}).forEach(opt => {
       Object.entries(opt.bettors||{}).forEach(([login,amount]) => {
-        if (opt.id===winOptId && winPool>0) {
+        if (opt.id===winOptId) {
           const cur=s.participants?.[login]?.balance||0;
-          updates[`sessions/${sessionCode}/participants/${login}/balance`]=+(cur+(amount/winPool)*total).toFixed(2);
+          const gain = +(amount * odds).toFixed(2);
+          updates[`sessions/${sessionCode}/participants/${login}/balance`]=+(cur+gain).toFixed(2);
         }
       });
     });
@@ -256,14 +257,12 @@ export default function App() {
     const market = s.markets?.[marketId];
     if (!market||market.status!=="open") return showToast("Paris fermés.","err");
     if (Object.values(market.options||{}).some(o=>o.bettors?.[twitchUser.login])) return showToast("Tu as déjà parié.","err");
-    const opt = market.options[optionId];
+    const odds = market.odds || 2;
     const updates = {};
-    updates[`sessions/${sessionCode}/markets/${marketId}/options/${optionId}/pool`]=(opt.pool||0)+amount;
     updates[`sessions/${sessionCode}/markets/${marketId}/options/${optionId}/bettors/${twitchUser.login}`]=amount;
-    updates[`sessions/${sessionCode}/markets/${marketId}/totalPool`]=(market.totalPool||0)+amount;
     updates[`sessions/${sessionCode}/participants/${twitchUser.login}/balance`]=+(participant.balance-amount).toFixed(2);
     await update(ref(getDb()),updates);
-    showToast(`Pari de ${fmt(amount)} coins placé !`);
+    showToast(`Pari de ${fmt(amount)} coins placé ! Gain potentiel : ${fmt(amount*odds)} coins`);
   }
 
   function logout() { LS.del("bv_user"); setTwitchUser(null); setView("home"); setSession(null); setSessionCode(null); if(unsub.current) unsub.current(); }
@@ -374,6 +373,8 @@ function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResol
   const [tab, setTab]     = useState("markets");
   const [title, setTitle] = useState("");
   const [opts, setOpts]   = useState(["Oui","Non"]);
+  const [odds, setOdds]   = useState(2);
+  const [customOdds, setCustomOdds] = useState("");
   const [copied, setCopied] = useState("");
   const mobile = useIsMobile();
   const markets = Object.values(session.markets||{}).sort((a,b)=>b.createdAt-a.createdAt);
@@ -384,7 +385,10 @@ function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResol
     if(!title.trim()) return;
     const o=opts.filter(x=>x.trim());
     if(o.length<2) return;
-    onCreateMarket(title,o); setTitle(""); setOpts(["Oui","Non"]);
+    const finalOdds = customOdds ? parseFloat(customOdds) : odds;
+    if (!finalOdds || finalOdds < 1.01) return;
+    onCreateMarket(title, o, finalOdds);
+    setTitle(""); setOpts(["Oui","Non"]); setOdds(2); setCustomOdds("");
   }
 
   return (
@@ -426,6 +430,22 @@ function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResol
             </div>
           ))}
           {opts.length<6&&<button style={S.addBtn} onClick={()=>setOpts([...opts,""])}>{t.addOption}</button>}
+          <label style={S.label}>Cote (gain = mise × cote)</label>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
+            {[1.20, 2, 3, 5].map(v=>(
+              <button key={v} style={{...S.chipOdds,...(!customOdds&&odds===v?S.chipOddsOn:{})}}
+                onClick={()=>{setOdds(v);setCustomOdds("");}}>
+                ×{v}
+              </button>
+            ))}
+          </div>
+          <input style={S.input} type="number" step="0.01" min="1.01" placeholder="Cote personnalisée (ex: 1.75)"
+            value={customOdds} onChange={e=>{setCustomOdds(e.target.value);}}/>
+          {(customOdds ? parseFloat(customOdds) : odds) && (
+            <div style={{fontSize:12,color:"#a78bfa",marginTop:6}}>
+              Exemple : miser 100 coins → gagner <b>{fmt(100*(customOdds?parseFloat(customOdds):odds))} coins</b>
+            </div>
+          )}
           <button style={{...S.primaryBtn,width:"100%",marginTop:20}} onClick={submit}>{t.openMarket}</button>
         </div>
       )}
@@ -436,24 +456,30 @@ function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResol
 
 function AdminMarketCard({ market, t, onClose, onResolve }) {
   const opts = Object.values(market.options||{});
-  const total = market.totalPool||0;
+  const odds = market.odds || 2;
   return (
     <div style={S.mCard}>
-      <div style={S.mTop}><span style={S.mTitle}>{market.title}</span><StatusBadge status={market.status} t={t}/></div>
+      <div style={S.mTop}>
+        <span style={S.mTitle}>{market.title}</span>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <span style={S.oddsBadge}>×{odds}</span>
+          <StatusBadge status={market.status} t={t}/>
+        </div>
+      </div>
       <div style={S.optGrid}>
         {opts.map(opt=>{
-          const pct=total>0?Math.round((opt.pool/total)*100):Math.round(100/opts.length);
+          const betCount = Object.keys(opt.bettors||{}).length;
+          const totalBet = Object.values(opt.bettors||{}).reduce((s,v)=>s+v,0);
           return (
             <div key={opt.id} style={{...S.optRow,...(market.winner===opt.id?S.optWinner:{})}}>
-              <div style={S.optTop}><span>{opt.label}</span><b style={S.optPct}>{pct}%</b></div>
-              <div style={S.progWrap}><div style={{...S.progBar,width:`${pct}%`}}/></div>
-              <div style={S.optSub}>{fmt(opt.pool)} <Coin size={13}/> · {Object.keys(opt.bettors||{}).length} paris</div>
+              <div style={S.optTop}><span>{opt.label}</span><b style={S.optPct}>×{odds}</b></div>
+              <div style={S.optSub}>{fmt(totalBet)} coins misés · {betCount} pari{betCount>1?"s":""}</div>
             </div>
           );
         })}
       </div>
       <div style={S.mFoot}>
-        <span style={S.mTotal}>{t.totalPool}: {fmt(total)} <Coin size={13}/></span>
+        <span style={S.mTotal}>Gain si victoire : mise × {odds}</span>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           {market.status==="open"&&<button style={S.closeBtn} onClick={()=>onClose(market.id)}>{t.closeBets}</button>}
           {market.status==="closed"&&opts.map(opt=>(
@@ -510,7 +536,7 @@ function ViewerMarketCard({ market, user, balance, t, onBet }) {
   const [sel, setSel]     = useState(null);
   const [amount, setAmount] = useState("");
   const opts  = Object.values(market.options||{});
-  const total = market.totalPool||0;
+  const odds  = market.odds || 2;
   const myBetOpt = opts.find(o=>o.bettors?.[user.login]);
   const canBet = market.status==="open" && !myBetOpt;
 
@@ -525,20 +551,21 @@ function ViewerMarketCard({ market, user, balance, t, onBet }) {
       <div style={S.mTop}><span style={S.mTitle}>{market.title}</span><StatusBadge status={market.status} t={t}/></div>
       <div style={S.optGrid}>
         {opts.map(opt=>{
-          const pct=total>0?Math.round((opt.pool/total)*100):Math.round(100/opts.length);
           const isMine=myBetOpt?.id===opt.id;
           const isWin=market.winner===opt.id;
+          const myBetAmount = isMine ? (myBetOpt.bettors[user.login]||0) : 0;
           return (
             <div key={opt.id} style={{...S.optRow,...(sel===opt.id?S.optSel:{}),...(isWin?S.optWinner:{}),...(isMine?S.optMine:{}),cursor:canBet?"pointer":"default"}}
               onClick={()=>canBet&&setSel(opt.id)}>
               <div style={S.optTop}>
                 <span>{opt.label}{isMine?` ${t.myBet}`:""}{isWin?" 🏆":""}</span>
-                <b style={S.optPct}>{pct}%</b>
+                <b style={S.optPct}>×{odds}</b>
               </div>
-              <div style={S.progWrap}><div style={{...S.progBar,width:`${pct}%`}}/></div>
               <div style={S.optSub}>
-                ×{total>0&&opt.pool>0?(total/opt.pool).toFixed(2):"∞"}
-                {isMine&&<span style={{color:"#9146ff",marginLeft:8}}>{fmt(myBetOpt.bettors[user.login])} <Coin size={13}/></span>}
+                {isMine
+                  ? <span>Misé : {fmt(myBetAmount)} <Coin size={12}/> → Gain potentiel : <b style={{color:"#4ade80"}}>{fmt(myBetAmount*odds)} <Coin size={12}/></b></span>
+                  : <span>Cote : ×{odds} — Miser {amount||100} → gagner <b style={{color:"#4ade80"}}>{fmt((parseFloat(amount)||100)*odds)}</b> <Coin size={12}/></span>
+                }
               </div>
             </div>
           );
@@ -705,7 +732,9 @@ const S = {
   resolveBtn:{ background:"#052e16", border:"1px solid #16a34a", color:"#4ade80", padding:"6px 12px", borderRadius:6, cursor:"pointer", fontSize:12 },
   rmBtn:{ background:"#18182a", border:"1px solid #2a2a3e", color:"#f87171", borderRadius:6, padding:"0 12px", cursor:"pointer" },
   addBtn:{ background:"none", border:"1px dashed #2a2a3e", color:"#6b7280", padding:8, borderRadius:8, cursor:"pointer", width:"100%", fontSize:13, marginTop:4 },
-  badgeOpen:{ fontSize:11, color:"#4ade80", background:"rgba(74,222,128,.1)", padding:"3px 10px", borderRadius:20, whiteSpace:"nowrap" },
+  oddsBadge:{ fontSize:12, fontWeight:800, color:"#f59e0b", background:"rgba(245,158,11,.15)", border:"1px solid rgba(245,158,11,.3)", padding:"3px 10px", borderRadius:20, whiteSpace:"nowrap" },
+  chipOdds:{ background:"#18182a", border:"1px solid #2a2a3e", color:"#9ca3af", padding:"8px 16px", borderRadius:8, cursor:"pointer", fontSize:14, fontWeight:700 },
+  chipOddsOn:{ background:"rgba(245,158,11,.15)", border:"1px solid #f59e0b", color:"#f59e0b" },
   badgeClosed:{ fontSize:11, color:"#fbbf24", background:"rgba(251,191,36,.1)", padding:"3px 10px", borderRadius:20, whiteSpace:"nowrap" },
   badgeResolved:{ fontSize:11, color:"#9ca3af", background:"#18182a", padding:"3px 10px", borderRadius:20, whiteSpace:"nowrap" },
   myBetNote:{ marginTop:12, fontSize:13, color:"#a78bfa", background:"rgba(145,70,255,.08)", border:"1px solid rgba(145,70,255,.2)", borderRadius:6, padding:"8px 14px" },
