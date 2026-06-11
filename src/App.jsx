@@ -184,13 +184,6 @@ export default function App() {
 
   function showToast(msg, type="ok") { setToast({msg,type}); setTimeout(()=>setToast(null),3500); }
 
-  function handleKickLogin(pseudo) {
-    if (!pseudo.trim()) return;
-    const user = { id:`kick_${pseudo.toLowerCase()}`, login:pseudo.toLowerCase(), displayName:pseudo,
-      avatar:`https://ui-avatars.com/api/?name=${encodeURIComponent(pseudo)}&background=53fc18&color=000&bold=true`, platform:"kick" };
-    setTwitchUser(user); LS.set("bv_user", user);
-  }
-
   async function handleCreate() {
     const code = genCode();
     const link = `${window.location.origin}${window.location.pathname}?join=${code}`;
@@ -290,7 +283,7 @@ export default function App() {
       <main style={S.main}>
         {authLoading && <Loader />}
         {authError && <ErrorBanner msg={authError} onDismiss={()=>setAuthError("")} />}
-        {view==="home" && !authLoading && <HomePage user={twitchUser} t={t} onLogin={()=>{window.location.href=buildTwitchURL();}} onKickLogin={handleKickLogin} onCreate={handleCreate} onJoin={handleJoin} />}
+        {view==="home" && !authLoading && <HomePage user={twitchUser} t={t} onLogin={()=>{window.location.href=buildTwitchURL();}} onCreate={handleCreate} onJoin={handleJoin} />}
         {view==="streamer" && session && <StreamerDash session={session} user={twitchUser} t={t} onCreateMarket={handleCreateMarket} onCloseMarket={handleCloseMarket} onResolveMarket={handleResolveMarket} onStartLive={handleStartLive} onEndSession={handleEndSession} />}
         {view==="viewer" && session && <ViewerDash session={session} user={twitchUser} t={t} onBet={handleBet} />}
         {view==="results" && session && <ResultsPage session={session} user={twitchUser} t={t} onHome={()=>{setView("home");setSession(null);setSessionCode(null);}} />}
@@ -320,9 +313,8 @@ function Nav({ user, onLogout, onHome, session, isStreamer, onDash, lang, onTogg
         </button>
         {user ? (
           <div style={S.userChip}>
-            <img src={user.avatar} style={{...S.ava,border:user.platform==="kick"?"2px solid #53fc18":"2px solid #9146ff"}} alt="" />
+            <img src={user.avatar} style={{...S.ava, border:"2px solid #9146ff"}} alt="" />
             <span style={S.uname}>{user.displayName}</span>
-            {user.platform==="kick" && <span style={{fontSize:10,color:"#53fc18",background:"rgba(83,252,24,.15)",padding:"1px 6px",borderRadius:10}}>KICK</span>}
             <button style={S.logoutBtn} onClick={onLogout}>↩</button>
           </div>
         ) : <span style={S.guestTxt}>{lang==="fr"?"Non connecté":"Not signed in"}</span>}
@@ -331,10 +323,8 @@ function Nav({ user, onLogout, onHome, session, isStreamer, onDash, lang, onTogg
   );
 }
 
-function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
-  const [code, setCode]         = useState("");
-  const [kickPseudo, setKickPseudo] = useState("");
-  const [showKick, setShowKick] = useState(false);
+function HomePage({ user, t, onLogin, onCreate, onJoin }) {
+  const [code, setCode] = useState("");
   const mobile = useIsMobile();
 
   return (
@@ -353,17 +343,6 @@ function HomePage({ user, t, onLogin, onKickLogin, onCreate, onJoin }) {
         <div style={S.loginBox}>
           <p style={S.loginHint}>{t.loginHint}</p>
           <button style={S.twitchBtn} onClick={onLogin}><TwitchSVG />{t.loginTwitch}</button>
-          <div style={{margin:"16px 0",color:"#4b5563",fontSize:13}}>— ou —</div>
-          {!showKick ? (
-            <button style={S.kickBtn} onClick={()=>setShowKick(true)}><KickSVG />{t.loginKick}</button>
-          ) : (
-            <div style={{display:"flex",gap:8,maxWidth:360,margin:"0 auto"}}>
-              <input style={{...S.codeInput,flex:1,letterSpacing:"normal",fontSize:14}} placeholder={t.kickPlaceholder}
-                value={kickPseudo} onChange={e=>setKickPseudo(e.target.value)}
-                onKeyDown={e=>e.key==="Enter"&&onKickLogin(kickPseudo)} />
-              <button style={S.kickBtn} onClick={()=>onKickLogin(kickPseudo)}>{t.kickJoin}</button>
-            </div>
-          )}
         </div>
       ) : (
         <div className="cards2" style={{...S.cards2,gridTemplateColumns:mobile?"1fr":"1fr auto 1fr"}}>
