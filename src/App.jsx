@@ -215,11 +215,14 @@ export default function App() {
   async function handleStartLive() { await update(ref(getDb(),`sessions/${sessionCode}`),{status:"live"}); showToast("Le live a démarré !"); }
   async function handleEndSession() { await update(ref(getDb(),`sessions/${sessionCode}`),{status:"ended"}); setView("results"); }
 
-  async function handleCreateMarket(title, options, odds) {
+  async function handleCreateMarket(title, options) {
     const id = genId();
     const opts = {};
-    options.forEach(label => { const oid=genId(); opts[oid]={id:oid,label,bettors:{}}; });
-    await set(ref(getDb(),`sessions/${sessionCode}/markets/${id}`),{id,title,options:opts,odds,status:"open",createdAt:Date.now(),winner:null});
+    options.forEach(({label, odds}) => { 
+      const oid=genId(); 
+      opts[oid]={id:oid, label, odds, bettors:{}}; 
+    });
+    await set(ref(getDb(),`sessions/${sessionCode}/markets/${id}`),{id,title,options:opts,status:"open",createdAt:Date.now(),winner:null});
     showToast("Marché ouvert !");
   }
 
@@ -230,19 +233,19 @@ export default function App() {
     const s = snap.val();
     const market = s.markets?.[marketId];
     if (!market) return;
-    const odds = market.odds || 2;
     const updates = {};
     updates[`sessions/${sessionCode}/markets/${marketId}/status`]="resolved";
     updates[`sessions/${sessionCode}/markets/${marketId}/winner`]=winOptId;
-    // Avec cotes fixes : chaque gagnant reçoit sa mise × la cote
+    // Chaque gagnant reçoit sa mise × la cote de son option
     Object.values(market.options||{}).forEach(opt => {
-      Object.entries(opt.bettors||{}).forEach(([login,amount]) => {
-        if (opt.id===winOptId) {
-          const cur=s.participants?.[login]?.balance||0;
-          const gain = +(amount * odds).toFixed(2);
-          updates[`sessions/${sessionCode}/participants/${login}/balance`]=+(cur+gain).toFixed(2);
-        }
-      });
+      if (opt.id === winOptId) {
+        const optOdds = opt.odds || 2;
+        Object.entries(opt.bettors||{}).forEach(([login,amount]) => {
+          const cur = s.participants?.[login]?.balance || 0;
+          const gain = +(amount * optOdds).toFixed(2);
+          updates[`sessions/${sessionCode}/participants/${login}/balance`] = +(cur + gain).toFixed(2);
+        });
+      }
     });
     await update(ref(getDb()),updates);
     showToast("🏆 Gains distribués !");
@@ -257,12 +260,13 @@ export default function App() {
     const market = s.markets?.[marketId];
     if (!market||market.status!=="open") return showToast("Paris fermés.","err");
     if (Object.values(market.options||{}).some(o=>o.bettors?.[twitchUser.login])) return showToast("Tu as déjà parié.","err");
-    const odds = market.odds || 2;
+    const optData = market.options[optionId];
+    const optOdds = optData?.odds || 2;
     const updates = {};
     updates[`sessions/${sessionCode}/markets/${marketId}/options/${optionId}/bettors/${twitchUser.login}`]=amount;
     updates[`sessions/${sessionCode}/participants/${twitchUser.login}/balance`]=+(participant.balance-amount).toFixed(2);
     await update(ref(getDb()),updates);
-    showToast(`Pari de ${fmt(amount)} coins placé ! Gain potentiel : ${fmt(amount*odds)} coins`);
+    showToast(`Pari de ${fmt(amount)} coins ! Gain potentiel : ${fmt(amount*optOdds)} coins (×${optOdds})`);
   }
 
   function logout() { LS.del("bv_user"); setTwitchUser(null); setView("home"); setSession(null); setSessionCode(null); if(unsub.current) unsub.current(); }
@@ -372,9 +376,10 @@ function HomePage({ user, t, onLogin, onCreate, onJoin }) {
 function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResolveMarket, onStartLive, onEndSession }) {
   const [tab, setTab]     = useState("markets");
   const [title, setTitle] = useState("");
-  const [opts, setOpts]   = useState(["Oui","Non"]);
-  const [odds, setOdds]   = useState(2);
-  const [customOdds, setCustomOdds] = useState("");
+  const [optOdds, setOptOdds] = useState([
+    {label:"Oui", odds:2, custom:""},
+    {label:"Non", odds:3, custom:""},
+  ]);
   const [copied, setCopied] = useState("");
   const mobile = useIsMobile();
   const markets = Object.values(session.markets||{}).sort((a,b)=>b.createdAt-a.createdAt);
@@ -383,12 +388,20 @@ function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResol
   function copy(val,key){ navigator.clipboard.writeText(val); setCopied(key); setTimeout(()=>setCopied(""),2000); }
   function submit(){
     if(!title.trim()) return;
-    const o=opts.filter(x=>x.trim());
-    if(o.length<2) return;
-    const finalOdds = customOdds ? parseFloat(customOdds) : odds;
-    if (!finalOdds || finalOdds < 1.01) return;
-    onCreateMarket(title, o, finalOdds);
-    setTitle(""); setOpts(["Oui","Non"]); setOdds(2); setCustomOdds("");
+    const valid = optOdds.filter(o=>o.label.trim());
+    if(valid.length<2) return;
+    // Vérifier que toutes les cotes sont valides
+    for(const o of valid){
+      const v = o.custom ? parseFloat(o.custom) : o.odds;
+      if(!v || v < 1.01) return;
+    }
+    const options = valid.map(o=>({
+      label: o.label,
+      odds: o.custom ? parseFloat(o.custom) : o.odds
+    }));
+    onCreateMarket(title, options);
+    setTitle("");
+    setOptOdds([{label:"Oui",odds:2,custom:""},{label:"Non",odds:3,custom:""}]);
   }
 
   return (
@@ -421,31 +434,31 @@ function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResol
           <h3 style={S.cardH}>{t.create}</h3>
           <label style={S.label}>{t.question}</label>
           <input style={S.input} placeholder={t.questionPlaceholder} value={title} onChange={e=>setTitle(e.target.value)}/>
-          <label style={S.label}>{t.options}</label>
-          {opts.map((o,i)=>(
-            <div key={i} style={{display:"flex",gap:8,marginBottom:8}}>
-              <input style={{...S.input,flex:1,marginBottom:0}} value={o} placeholder={`Option ${i+1}`}
-                onChange={e=>{const a=[...opts];a[i]=e.target.value;setOpts(a);}}/>
-              {opts.length>2&&<button style={S.rmBtn} onClick={()=>setOpts(opts.filter((_,j)=>j!==i))}>✕</button>}
+          <label style={S.label}>{t.options} & Cotes</label>
+          {optOdds.map((o,i)=>(
+            <div key={i} style={{background:"#07070f",border:"1px solid #2a2a3e",borderRadius:10,padding:12,marginBottom:10}}>
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                <input style={{...S.input,flex:1,marginBottom:0}} value={o.label} placeholder={`Option ${i+1}`}
+                  onChange={e=>{const a=[...optOdds];a[i]={...a[i],label:e.target.value};setOptOdds(a);}}/>
+                {optOdds.length>2&&<button style={S.rmBtn} onClick={()=>setOptOdds(optOdds.filter((_,j)=>j!==i))}>✕</button>}
+              </div>
+              <div style={{fontSize:11,color:"#6b7280",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em"}}>Cote pour cette option</div>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
+                {[1.20,2,3,5].map(v=>(
+                  <button key={v} style={{...S.chipOdds,...(!o.custom&&o.odds===v?S.chipOddsOn:{})}}
+                    onClick={()=>{const a=[...optOdds];a[i]={...a[i],odds:v,custom:""};setOptOdds(a);}}>
+                    ×{v}
+                  </button>
+                ))}
+              </div>
+              <input style={{...S.input,marginBottom:4}} type="number" step="0.01" min="1.01" placeholder="Cote personnalisée (ex: 1.75)"
+                value={o.custom} onChange={e=>{const a=[...optOdds];a[i]={...a[i],custom:e.target.value};setOptOdds(a);}}/>
+              <div style={{fontSize:12,color:"#4ade80"}}>
+                Miser 100 → gagner <b>{fmt(100*(o.custom?parseFloat(o.custom)||0:o.odds))} coins</b>
+              </div>
             </div>
           ))}
-          {opts.length<6&&<button style={S.addBtn} onClick={()=>setOpts([...opts,""])}>{t.addOption}</button>}
-          <label style={S.label}>Cote (gain = mise × cote)</label>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
-            {[1.20, 2, 3, 5].map(v=>(
-              <button key={v} style={{...S.chipOdds,...(!customOdds&&odds===v?S.chipOddsOn:{})}}
-                onClick={()=>{setOdds(v);setCustomOdds("");}}>
-                ×{v}
-              </button>
-            ))}
-          </div>
-          <input style={S.input} type="number" step="0.01" min="1.01" placeholder="Cote personnalisée (ex: 1.75)"
-            value={customOdds} onChange={e=>{setCustomOdds(e.target.value);}}/>
-          {(customOdds ? parseFloat(customOdds) : odds) && (
-            <div style={{fontSize:12,color:"#a78bfa",marginTop:6}}>
-              Exemple : miser 100 coins → gagner <b>{fmt(100*(customOdds?parseFloat(customOdds):odds))} coins</b>
-            </div>
-          )}
+          {optOdds.length<6&&<button style={S.addBtn} onClick={()=>setOptOdds([...optOdds,{label:"",odds:2,custom:""}])}>{t.addOption}</button>}
           <button style={{...S.primaryBtn,width:"100%",marginTop:20}} onClick={submit}>{t.openMarket}</button>
         </div>
       )}
@@ -456,30 +469,30 @@ function StreamerDash({ session, user, t, onCreateMarket, onCloseMarket, onResol
 
 function AdminMarketCard({ market, t, onClose, onResolve }) {
   const opts = Object.values(market.options||{});
-  const odds = market.odds || 2;
   return (
     <div style={S.mCard}>
       <div style={S.mTop}>
         <span style={S.mTitle}>{market.title}</span>
-        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <span style={S.oddsBadge}>×{odds}</span>
-          <StatusBadge status={market.status} t={t}/>
-        </div>
+        <StatusBadge status={market.status} t={t}/>
       </div>
       <div style={S.optGrid}>
         {opts.map(opt=>{
+          const optOdds = opt.odds || 2;
           const betCount = Object.keys(opt.bettors||{}).length;
           const totalBet = Object.values(opt.bettors||{}).reduce((s,v)=>s+v,0);
           return (
             <div key={opt.id} style={{...S.optRow,...(market.winner===opt.id?S.optWinner:{})}}>
-              <div style={S.optTop}><span>{opt.label}</span><b style={S.optPct}>×{odds}</b></div>
-              <div style={S.optSub}>{fmt(totalBet)} coins misés · {betCount} pari{betCount>1?"s":""}</div>
+              <div style={S.optTop}>
+                <span>{opt.label}</span>
+                <b style={S.optPct}>×{optOdds}</b>
+              </div>
+              <div style={S.optSub}>{fmt(totalBet)} coins · {betCount} pari{betCount>1?"s":""} · Gain ×{optOdds}</div>
             </div>
           );
         })}
       </div>
       <div style={S.mFoot}>
-        <span style={S.mTotal}>Gain si victoire : mise × {odds}</span>
+        <span style={S.mTotal}>Cotes fixes par option</span>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           {market.status==="open"&&<button style={S.closeBtn} onClick={()=>onClose(market.id)}>{t.closeBets}</button>}
           {market.status==="closed"&&opts.map(opt=>(
@@ -536,7 +549,6 @@ function ViewerMarketCard({ market, user, balance, t, onBet }) {
   const [sel, setSel]     = useState(null);
   const [amount, setAmount] = useState("");
   const opts  = Object.values(market.options||{});
-  const odds  = market.odds || 2;
   const myBetOpt = opts.find(o=>o.bettors?.[user.login]);
   const canBet = market.status==="open" && !myBetOpt;
 
@@ -553,18 +565,19 @@ function ViewerMarketCard({ market, user, balance, t, onBet }) {
         {opts.map(opt=>{
           const isMine=myBetOpt?.id===opt.id;
           const isWin=market.winner===opt.id;
+          const optOdds = opt.odds || 2;
           const myBetAmount = isMine ? (myBetOpt.bettors[user.login]||0) : 0;
           return (
             <div key={opt.id} style={{...S.optRow,...(sel===opt.id?S.optSel:{}),...(isWin?S.optWinner:{}),...(isMine?S.optMine:{}),cursor:canBet?"pointer":"default"}}
               onClick={()=>canBet&&setSel(opt.id)}>
               <div style={S.optTop}>
                 <span>{opt.label}{isMine?` ${t.myBet}`:""}{isWin?" 🏆":""}</span>
-                <b style={S.optPct}>×{odds}</b>
+                <b style={{...S.optPct, color:"#f59e0b"}}>×{optOdds}</b>
               </div>
               <div style={S.optSub}>
                 {isMine
-                  ? <span>Misé : {fmt(myBetAmount)} <Coin size={12}/> → Gain potentiel : <b style={{color:"#4ade80"}}>{fmt(myBetAmount*odds)} <Coin size={12}/></b></span>
-                  : <span>Cote : ×{odds} — Miser {amount||100} → gagner <b style={{color:"#4ade80"}}>{fmt((parseFloat(amount)||100)*odds)}</b> <Coin size={12}/></span>
+                  ? <span>Misé : {fmt(myBetAmount)} <Coin size={12}/> → Gain : <b style={{color:"#4ade80"}}>{fmt(myBetAmount*optOdds)} <Coin size={12}/></b></span>
+                  : <span>Cote ×{optOdds} — Miser {amount||100} → <b style={{color:"#4ade80"}}>{fmt((parseFloat(amount)||100)*optOdds)} <Coin size={12}/></b></span>
                 }
               </div>
             </div>
